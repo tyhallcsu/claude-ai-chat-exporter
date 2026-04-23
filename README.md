@@ -2,7 +2,7 @@
 
 A Tampermonkey / Violentmonkey / Greasemonkey userscript that exports Claude AI conversations from [claude.ai](https://claude.ai) to **Markdown**, **JSON**, or **HTML**.
 
-Fork of [sharmanhall/claude-ai-chat-exporter](https://greasyfork.org/en/scripts/574914-claude-ai-chat-exporter) with a rewritten extraction pipeline, rich content support, and a settings panel.
+Author: [sharmanhall](https://greasyfork.org/en/users/866731-sharmanhall). Mirrors and source live in this GitHub repo; the script is published on Greasy Fork at [claude-ai-chat-exporter](https://greasyfork.org/en/scripts/574914-claude-ai-chat-exporter).
 
 ## Install
 
