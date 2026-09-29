@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Claude AI Chat Exporter
 // @namespace    https://github.com/tyhallcsu/claude-ai-chat-exporter
-// @version      2026.04.22.1
+// @version      2026.09.29.1
 // @description  Export Claude AI conversations to Markdown, JSON, or HTML. API-first with DOM fallback; supports thinking blocks, tool use, attachments, and branched threads.
 // @author       sharmanhall
 // @homepageURL  https://github.com/tyhallcsu/claude-ai-chat-exporter
@@ -21,7 +21,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '2026.04.22.1';
+  const VERSION = '2026.09.29.1';
 
   const DEFAULTS = {
     format: 'markdown',      // 'markdown' | 'json' | 'html'
@@ -111,12 +111,15 @@
 
   // ---------- API fetch ----------
 
-  function getConversationIdFromUrl() {
+  // Returns { kind: 'chat' | 'share', id } or null.
+  function getRouteFromUrl() {
     const parts = window.location.pathname.split('/').filter(Boolean);
+    const shareIdx = parts.indexOf('share');
+    if (shareIdx >= 0 && parts[shareIdx + 1]) return { kind: 'share', id: parts[shareIdx + 1] };
     const idx = parts.indexOf('chat');
-    if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
+    if (idx >= 0 && parts[idx + 1]) return { kind: 'chat', id: parts[idx + 1] };
     const last = parts[parts.length - 1];
-    return /^[0-9a-f-]{16,}$/i.test(last) ? last : null;
+    return /^[0-9a-f-]{16,}$/i.test(last) ? { kind: 'chat', id: last } : null;
   }
 
   function getOrgIdFromCookie() {
@@ -124,24 +127,76 @@
   }
 
   async function fetchConversationData() {
-    const conversationId = getConversationIdFromUrl();
+    const route = getRouteFromUrl();
+    if (!route) return null;
+    return route.kind === 'share' ? fetchShareData(route.id) : fetchChatData(route.id);
+  }
+
+  async function apiFetch(url) {
+    return fetch(url, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  async function fetchChatData(conversationId) {
     const orgId = getOrgIdFromCookie();
-    if (!conversationId || !orgId) return null;
+    if (!orgId) return null;
 
     const url = `/api/organizations/${orgId}/chat_conversations/${conversationId}` +
       `?tree=true&rendering_mode=messages&render_all_tools=true`;
 
     try {
-      const res = await fetch(url, {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const res = await apiFetch(url);
       if (!res.ok) return null;
       return await res.json();
     } catch (e) {
       console.warn('[Claude Exporter] API fetch failed:', e);
       return null;
     }
+  }
+
+  // Shared chats (claude.ai/share/<id>) are served as snapshots. Errors are
+  // thrown rather than returned as null: share pages have no copy buttons, so
+  // the DOM fallback cannot help.
+  async function fetchShareData(shareId) {
+    const orgId = getOrgIdFromCookie();
+    if (!orgId) {
+      throw new Error('No Claude organization found (lastActiveOrg cookie missing). Sign in to claude.ai and reload this shared chat.');
+    }
+
+    const url = `/api/organizations/${orgId}/chat_snapshots/${shareId}` +
+      `?rendering_mode=messages&render_all_tools=true`;
+
+    let res;
+    try {
+      res = await apiFetch(url);
+    } catch (e) {
+      throw new Error(`Could not reach the Claude API for this shared chat (${e.message}).`);
+    }
+    if (res.status === 403 || res.status === 404) {
+      throw new Error(`No access to this shared chat (HTTP ${res.status}). Open it while signed in to an account it was shared with.`);
+    }
+    if (!res.ok) throw new Error(`Shared chat request failed (HTTP ${res.status}).`);
+
+    const data = normalizeSnapshot(await res.json(), shareId);
+    if (!data.chat_messages.length) throw new Error('Shared chat returned no messages.');
+    return data;
+  }
+
+  // Snapshot response shape is not documented; map it onto the conversation
+  // shape used by buildActiveThread / resolveTitle / buildJson.
+  function normalizeSnapshot(raw, shareId) {
+    const snap = raw?.snapshot ?? {};
+    return {
+      ...raw,
+      uuid: raw?.uuid ?? snap.uuid ?? shareId,
+      name: raw?.name ?? raw?.snapshot_name ?? raw?.conversation?.name ?? snap.name ?? null,
+      model: raw?.model ?? snap.model ?? raw?.conversation?.model ?? null,
+      chat_messages: raw?.chat_messages ?? snap.chat_messages ?? raw?.messages ?? [],
+      current_leaf_message_uuid: raw?.current_leaf_message_uuid
+        ?? snap.current_leaf_message_uuid ?? null,
+    };
   }
 
   // ---------- thread walk ----------
@@ -152,6 +207,11 @@
   function buildActiveThread(data) {
     const messages = data?.chat_messages ?? [];
     if (!messages.length) return [];
+
+    // Flat lists (no parent links) have no branches to resolve; keep order.
+    if (!messages.some((m) => m.parent_message_uuid)) {
+      return [...messages].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+    }
 
     const byUuid = new Map(messages.map((m) => [m.uuid, m]));
     const leafId = data.current_leaf_message_uuid
@@ -373,6 +433,11 @@ ${rows}
     const dom = el?.textContent?.trim();
     if (dom && dom !== 'Claude' && !/new conversation/i.test(dom)) return dom;
 
+    if (getRouteFromUrl()?.kind === 'share') {
+      const docTitle = document.title.replace(/\s*[-|]\s*Claude\s*$/i, '').trim();
+      if (docTitle && docTitle !== 'Claude') return docTitle;
+    }
+
     return 'Claude conversation';
   }
 
@@ -507,6 +572,8 @@ ${rows}
       const data = await fetchConversationData();
       let thread;
 
+      // Share routes throw from fetchConversationData on failure, so only
+      // chat routes reach the copy-button fallback.
       if (data?.chat_messages?.length) {
         thread = buildActiveThread(data);
       } else {
