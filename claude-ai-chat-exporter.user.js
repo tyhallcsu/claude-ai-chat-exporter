@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Claude AI Chat Exporter
 // @namespace    https://github.com/tyhallcsu/claude-ai-chat-exporter
-// @version      2026.09.29.2
+// @version      2026.09.29.3
 // @description  Export Claude AI conversations to Markdown, JSON, or HTML. API-first with DOM fallback; supports thinking blocks, tool use, attachments, and branched threads.
 // @author       sharmanhall
 // @homepageURL  https://github.com/tyhallcsu/claude-ai-chat-exporter
@@ -21,7 +21,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '2026.09.29.2';
+  const VERSION = '2026.09.29.3';
 
   const DEFAULTS = {
     format: 'markdown',      // 'markdown' | 'json' | 'html'
@@ -500,99 +500,290 @@ ${rows}
 
   // ---------- UI ----------
 
+  const IDS = {
+    button: 'tyhallcsu-claude-exporter-button',
+    panel: 'tyhallcsu-claude-exporter-panel',
+    status: 'tyhallcsu-claude-exporter-status',
+    style: 'tyhallcsu-claude-exporter-style',
+  };
+
+  const LINKS = {
+    author: 'https://greasyfork.org/en/users/866731-sharmanhall',
+    greasyFork: 'https://greasyfork.org/en/scripts/574914-claude-ai-chat-exporter',
+    github: 'https://github.com/tyhallcsu/claude-ai-chat-exporter',
+    issues: 'https://github.com/tyhallcsu/claude-ai-chat-exporter/issues',
+  };
+
+  const FORMATS = [
+    { value: 'markdown', label: 'Markdown' },
+    { value: 'json', label: 'JSON' },
+    { value: 'html', label: 'HTML' },
+  ];
+
+  const TOGGLES = [
+    ['includeThinking', 'Include thinking blocks'],
+    ['includeToolUse', 'Include tool use / results'],
+    ['includeAttachments', 'Include attachments'],
+    ['includeTimestamps', 'Include timestamps'],
+    ['copyInsteadOfDownload', 'Copy to clipboard (no download)'],
+  ];
+
+  // Static stylesheet: no interpolated values. Scoped under our element ids.
+  const CSS = `
+#tyhallcsu-claude-exporter-button, #tyhallcsu-claude-exporter-panel, #tyhallcsu-claude-exporter-status {
+  --tce-bg: #0f172a; --tce-fg: #e2e8f0; --tce-muted: #94a3b8; --tce-border: rgba(148,163,184,.22);
+  --tce-surface: #1e293b; --tce-accent: #d97757; --tce-accent-fg: #fff; --tce-focus: #60a5fa;
+  --tce-ok: #15803d; --tce-err: #b91c1c; --tce-info: #1d4ed8;
+  font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; box-sizing: border-box;
+}
+#tyhallcsu-claude-exporter-button *, #tyhallcsu-claude-exporter-panel * { box-sizing: border-box; }
+#tyhallcsu-claude-exporter-button {
+  position: fixed; bottom: 18px; right: 18px; z-index: 2147483647; display: flex; gap: 6px;
+}
+#tyhallcsu-claude-exporter-button .tce-fab {
+  display: inline-flex; align-items: center; gap: 7px; padding: 10px 16px; border: 1px solid var(--tce-border);
+  border-radius: 999px; background: var(--tce-bg); color: var(--tce-fg); font: 600 13px system-ui, sans-serif;
+  cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,.25); transition: background .15s, transform .15s, opacity .15s;
+}
+#tyhallcsu-claude-exporter-button .tce-fab:hover:not(:disabled) { background: var(--tce-surface); transform: translateY(-1px); }
+#tyhallcsu-claude-exporter-button .tce-fab:disabled { opacity: .7; cursor: progress; }
+#tyhallcsu-claude-exporter-button .tce-fab svg { width: 15px; height: 15px; flex: none; }
+#tyhallcsu-claude-exporter-button .tce-gear { padding: 10px 12px; }
+#tyhallcsu-claude-exporter-panel {
+  position: fixed; bottom: 70px; right: 18px; z-index: 2147483647; width: 290px; max-width: calc(100vw - 36px);
+  background: var(--tce-bg); color: var(--tce-fg); border: 1px solid var(--tce-border); border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(0,0,0,.4); padding: 14px 16px 12px; animation: tce-in .14s ease-out;
+}
+#tyhallcsu-claude-exporter-panel .tce-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+#tyhallcsu-claude-exporter-panel .tce-title { margin: 0; font-size: 14px; font-weight: 700; }
+#tyhallcsu-claude-exporter-panel .tce-ver { margin-left: 6px; font-size: 11px; font-weight: 500; color: var(--tce-muted); }
+#tyhallcsu-claude-exporter-panel .tce-sub { margin-top: 2px; font-size: 12px; color: var(--tce-muted); }
+#tyhallcsu-claude-exporter-panel a { color: var(--tce-accent); text-decoration: none; border-radius: 3px; }
+#tyhallcsu-claude-exporter-panel a:hover { text-decoration: underline; }
+#tyhallcsu-claude-exporter-panel .tce-close {
+  width: 26px; height: 26px; border: none; border-radius: 6px; background: transparent; color: var(--tce-muted);
+  font-size: 18px; line-height: 1; cursor: pointer;
+}
+#tyhallcsu-claude-exporter-panel .tce-close:hover { background: var(--tce-surface); color: var(--tce-fg); }
+#tyhallcsu-claude-exporter-panel .tce-label { margin: 14px 0 6px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--tce-muted); }
+#tyhallcsu-claude-exporter-panel .tce-seg { display: flex; padding: 3px; gap: 3px; border: 1px solid var(--tce-border); border-radius: 9px; background: var(--tce-surface); }
+#tyhallcsu-claude-exporter-panel .tce-seg button {
+  flex: 1; padding: 6px 0; border: none; border-radius: 6px; background: transparent; color: var(--tce-fg);
+  font: 600 12px system-ui, sans-serif; cursor: pointer; transition: background .15s;
+}
+#tyhallcsu-claude-exporter-panel .tce-seg button[aria-checked="true"] { background: var(--tce-accent); color: var(--tce-accent-fg); }
+#tyhallcsu-claude-exporter-panel .tce-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; cursor: pointer; }
+#tyhallcsu-claude-exporter-panel .tce-switch {
+  appearance: none; -webkit-appearance: none; position: relative; flex: none; width: 32px; height: 18px; margin: 0;
+  border-radius: 999px; background: #475569; cursor: pointer; transition: background .15s;
+}
+#tyhallcsu-claude-exporter-panel .tce-switch::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%;
+  background: #fff; transition: transform .15s;
+}
+#tyhallcsu-claude-exporter-panel .tce-switch:checked { background: var(--tce-accent); }
+#tyhallcsu-claude-exporter-panel .tce-switch:checked::after { transform: translateX(14px); }
+#tyhallcsu-claude-exporter-panel .tce-foot {
+  display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 12px; padding-top: 10px;
+  border-top: 1px solid var(--tce-border); font-size: 12px;
+}
+#tyhallcsu-claude-exporter-panel .tce-hint { margin-left: auto; color: var(--tce-muted); font-size: 11px; }
+#tyhallcsu-claude-exporter-button :focus-visible, #tyhallcsu-claude-exporter-panel :focus-visible {
+  outline: 2px solid var(--tce-focus); outline-offset: 2px;
+}
+#tyhallcsu-claude-exporter-status {
+  position: fixed; top: 12px; right: 12px; z-index: 2147483647; max-width: 360px; padding: 10px 14px;
+  border-radius: 10px; background: var(--tce-info); color: #fff; font: 12px/1.45 ui-monospace, Menlo, monospace;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25); animation: tce-in .14s ease-out;
+}
+#tyhallcsu-claude-exporter-status[data-state="success"] { background: var(--tce-ok); }
+#tyhallcsu-claude-exporter-status[data-state="error"] { background: var(--tce-err); }
+@keyframes tce-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-color-scheme: light) {
+  #tyhallcsu-claude-exporter-button, #tyhallcsu-claude-exporter-panel {
+    --tce-bg: #ffffff; --tce-fg: #0f172a; --tce-muted: #64748b; --tce-border: rgba(15,23,42,.14);
+    --tce-surface: #f1f5f9; --tce-accent: #c15f3c; --tce-focus: #2563eb;
+  }
+  #tyhallcsu-claude-exporter-panel .tce-switch { background: #cbd5e1; }
+  #tyhallcsu-claude-exporter-panel .tce-switch:checked { background: var(--tce-accent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #tyhallcsu-claude-exporter-button *, #tyhallcsu-claude-exporter-panel, #tyhallcsu-claude-exporter-panel *,
+  #tyhallcsu-claude-exporter-status, #tyhallcsu-claude-exporter-panel .tce-switch::after {
+    transition: none !important; animation: none !important;
+  }
+  #tyhallcsu-claude-exporter-button .tce-fab:hover:not(:disabled) { transform: none; }
+}
+`;
+
+  const EXPORT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>';
+
+  const ui = { exportBtn: null, exportLabel: null, closePanel: null };
+
+  function ensureStyles() {
+    if (document.getElementById(IDS.style)) return;
+    const style = document.createElement('style');
+    style.id = IDS.style;
+    style.textContent = CSS;
+    (document.head || document.documentElement || document.body).appendChild(style);
+  }
+
+  function el(tag, props = {}, attrs = {}) {
+    const node = document.createElement(tag);
+    Object.assign(node, props);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    return node;
+  }
+
+  function link(text, href, ariaLabel) {
+    return el('a', { textContent: text, href, target: '_blank', rel: 'noopener noreferrer' },
+      ariaLabel ? { 'aria-label': ariaLabel } : {});
+  }
+
   function createStatus() {
-    const el = document.createElement('div');
-    el.id = 'tyhallcsu-claude-exporter-status';
-    el.style.cssText = [
-      'position:fixed', 'top:12px', 'right:12px', 'z-index:2147483647',
-      'background:#1f6feb', 'color:#fff', 'padding:10px 14px',
-      'border-radius:10px', 'font:12px/1.45 ui-monospace,Menlo,monospace',
-      'box-shadow:0 10px 30px rgba(0,0,0,.25)', 'max-width:360px',
-    ].join(';');
-    document.body.appendChild(el);
-    return el;
+    const status = document.createElement('div');
+    status.id = IDS.status;
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    ensureStyles();
+    document.body.appendChild(status);
+    return status;
+  }
+
+  function setStatusState(status, state) {
+    status.setAttribute('data-state', state);
+  }
+
+  function setExportingUI(busy) {
+    if (!ui.exportBtn) return;
+    ui.exportBtn.disabled = busy;
+    ui.exportBtn.setAttribute('aria-busy', String(busy));
+    ui.exportLabel.textContent = busy ? 'Exporting…' : 'Export';
   }
 
   function createButton() {
-    if (document.getElementById('tyhallcsu-claude-exporter-button')) return;
+    if (document.getElementById(IDS.button)) return;
+    ensureStyles();
 
-    const wrap = document.createElement('div');
-    wrap.id = 'tyhallcsu-claude-exporter-button';
-    wrap.style.cssText = 'position:fixed;bottom:18px;right:18px;z-index:2147483647;display:flex;gap:6px;';
+    const wrap = el('div', { id: IDS.button });
 
-    const main = document.createElement('button');
-    main.type = 'button';
-    main.textContent = 'Export';
-    main.title = 'Export Claude Chat (Alt+Shift+E)';
-    main.style.cssText = baseBtnStyle();
+    const main = el('button', { type: 'button', className: 'tce-fab', title: 'Export Claude Chat (Alt+Shift+E)' },
+      { 'aria-label': 'Export chat (Alt+Shift+E)', 'aria-keyshortcuts': 'Alt+Shift+E' });
+    const icon = el('span', { innerHTML: EXPORT_ICON }, { 'aria-hidden': 'true' });
+    const label = el('span', { textContent: 'Export' });
+    main.append(icon, label);
     main.addEventListener('click', () => void startExport());
 
-    const gear = document.createElement('button');
-    gear.type = 'button';
-    gear.textContent = '⚙';
-    gear.title = 'Export options';
-    gear.style.cssText = baseBtnStyle() + ';padding:10px 12px;';
+    const gear = el('button', { type: 'button', className: 'tce-fab tce-gear', textContent: '⚙', title: 'Export options' },
+      { 'aria-label': 'Export options', 'aria-haspopup': 'dialog', 'aria-controls': IDS.panel });
     gear.addEventListener('click', () => togglePanel());
+
+    ui.exportBtn = main;
+    ui.exportLabel = label;
+    setExportingUI(STATE.isExporting);
 
     wrap.append(main, gear);
     document.body.appendChild(wrap);
   }
 
-  function baseBtnStyle() {
-    return [
-      'padding:12px 16px', 'border:none', 'border-radius:999px',
-      'background:#111827', 'color:#fff', 'font:600 13px system-ui',
-      'cursor:pointer', 'box-shadow:0 10px 25px rgba(0,0,0,.25)',
-    ].join(';');
-  }
-
   function togglePanel() {
-    const existing = document.getElementById('tyhallcsu-claude-exporter-panel');
-    if (existing) { existing.remove(); return; }
+    const existing = document.getElementById(IDS.panel);
+    if (existing) {
+      if (ui.closePanel) ui.closePanel();
+      else existing.remove();
+      return;
+    }
+    ensureStyles();
 
-    const panel = document.createElement('div');
-    panel.id = 'tyhallcsu-claude-exporter-panel';
-    panel.style.cssText = [
-      'position:fixed', 'bottom:78px', 'right:18px', 'z-index:2147483647',
-      'background:#0f172a', 'color:#e2e8f0', 'padding:14px 16px',
-      'border-radius:12px', 'box-shadow:0 14px 40px rgba(0,0,0,.35)',
-      'font:13px/1.4 system-ui', 'min-width:240px',
-    ].join(';');
-
-    panel.innerHTML = `
-      <div style="font-weight:700;margin-bottom:8px;">Export options</div>
-      <label style="display:block;margin:6px 0;">Format:
-        <select data-k="format" style="margin-left:6px;">
-          <option value="markdown">Markdown (.md)</option>
-          <option value="json">JSON (.json)</option>
-          <option value="html">HTML (.html)</option>
-        </select>
-      </label>
-      ${checkbox('includeThinking', 'Include thinking blocks')}
-      ${checkbox('includeToolUse', 'Include tool use / results')}
-      ${checkbox('includeAttachments', 'Include attachments')}
-      ${checkbox('includeTimestamps', 'Include timestamps')}
-      ${checkbox('copyInsteadOfDownload', 'Copy to clipboard (no download)')}
-      <div style="margin-top:10px;opacity:.65;font-size:11px;">v${VERSION}</div>
-    `;
-
-    const sel = panel.querySelector('[data-k="format"]');
-    sel.value = prefs.format;
-    sel.addEventListener('change', (e) => savePref('format', e.target.value));
-
-    panel.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
-      cb.checked = !!prefs[cb.dataset.k];
-      cb.addEventListener('change', (e) => savePref(e.target.dataset.k, e.target.checked));
+    const panel = el('div', { id: IDS.panel }, {
+      role: 'dialog', 'aria-modal': 'false', 'aria-labelledby': 'tyhallcsu-claude-exporter-title',
     });
 
-    document.body.appendChild(panel);
-  }
+    // Header: title + version, author credit, close button.
+    const head = el('div', { className: 'tce-head' });
+    const headText = el('div');
+    const title = el('h2', { className: 'tce-title', id: 'tyhallcsu-claude-exporter-title', textContent: 'Claude Chat Exporter' });
+    title.appendChild(el('span', { className: 'tce-ver', textContent: `v${VERSION}` }));
+    const sub = el('div', { className: 'tce-sub', textContent: 'by ' });
+    sub.appendChild(link('sharmanhall', LINKS.author, 'sharmanhall on Greasy Fork'));
+    headText.append(title, sub);
+    const closeBtn = el('button', { type: 'button', className: 'tce-close', textContent: '×', title: 'Close' },
+      { 'aria-label': 'Close export options' });
+    head.append(headText, closeBtn);
 
-  function checkbox(key, label) {
-    return `<label style="display:block;margin:6px 0;">
-      <input type="checkbox" data-k="${key}" style="margin-right:6px;">
-      ${escapeHtml(label)}
-    </label>`;
+    // Format: segmented radio buttons.
+    const fmtLabel = el('div', { className: 'tce-label', id: 'tyhallcsu-claude-exporter-fmt', textContent: 'Format' });
+    const seg = el('div', { className: 'tce-seg' }, { role: 'radiogroup', 'aria-labelledby': 'tyhallcsu-claude-exporter-fmt' });
+    const segBtns = FORMATS.map(({ value, label }) => {
+      const b = el('button', { type: 'button', textContent: label }, { role: 'radio', 'data-k': value });
+      b.addEventListener('click', () => { savePref('format', value); syncFormat(); });
+      return b;
+    });
+    function syncFormat() {
+      for (const b of segBtns) {
+        const on = b.getAttribute('data-k') === prefs.format;
+        b.setAttribute('aria-checked', String(on));
+        b.tabIndex = on ? 0 : -1;
+      }
+    }
+    seg.addEventListener('keydown', (e) => {
+      const dir = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+      if (!dir) return;
+      e.preventDefault();
+      const i = FORMATS.findIndex((f) => f.value === prefs.format);
+      const next = FORMATS[(i + dir + FORMATS.length) % FORMATS.length].value;
+      savePref('format', next);
+      syncFormat();
+      segBtns.find((b) => b.getAttribute('data-k') === next).focus();
+    });
+    seg.append(...segBtns);
+    syncFormat();
+
+    // Options: toggle switches.
+    const optLabel = el('div', { className: 'tce-label', textContent: 'Include' });
+    const opts = el('div');
+    for (const [key, text] of TOGGLES) {
+      const row = el('label', { className: 'tce-row' });
+      const cb = el('input', { type: 'checkbox', className: 'tce-switch', checked: !!prefs[key] },
+        { role: 'switch', 'data-k': key, 'aria-label': text });
+      cb.addEventListener('change', (e) => savePref(key, e.target.checked));
+      row.append(el('span', { textContent: text }), cb);
+      opts.appendChild(row);
+    }
+
+    // Footer links.
+    const foot = el('div', { className: 'tce-foot' });
+    foot.append(
+      link('Greasy Fork', LINKS.greasyFork),
+      link('GitHub', LINKS.github),
+      link('Report issue', LINKS.issues),
+      el('span', { className: 'tce-hint', textContent: 'Alt+Shift+E' }),
+    );
+
+    panel.append(head, fmtLabel, seg, optLabel, opts, foot);
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.stopPropagation(); close(true); }
+    };
+    const onPointer = (e) => {
+      const btnWrap = document.getElementById(IDS.button);
+      if (panel.contains(e.target) || btnWrap?.contains(e.target)) return;
+      close(false);
+    };
+    function close(restoreFocus) {
+      document.removeEventListener('keydown', onKey, true);
+      document.removeEventListener('mousedown', onPointer, true);
+      panel.remove();
+      ui.closePanel = null;
+      if (restoreFocus) document.getElementById(IDS.button)?.querySelector('.tce-gear')?.focus();
+    }
+    closeBtn.addEventListener('click', () => close(true));
+    document.addEventListener('keydown', onKey, true);
+    document.addEventListener('mousedown', onPointer, true);
+    ui.closePanel = () => close(false);
+
+    document.body.appendChild(panel);
+    (segBtns.find((b) => b.tabIndex === 0) || closeBtn).focus();
   }
 
   // ---------- main ----------
@@ -601,6 +792,7 @@ ${rows}
     if (STATE.isExporting) { notify('An export is already running.'); return; }
     STATE.isExporting = true;
     const statusDiv = createStatus();
+    setExportingUI(true);
     const format = formatOverride ?? prefs.format;
 
     try {
@@ -645,22 +837,23 @@ ${rows}
       if (prefs.copyInsteadOfDownload) {
         const copied = await Promise.resolve(copyToClipboard(content));
         if (!copied) throw new Error('Clipboard write failed');
-        statusDiv.style.background = '#15803d';
+        setStatusState(statusDiv, 'success');
         statusDiv.textContent = `Copied ${format} to clipboard (${thread.length} messages)`;
         notify(`Copied ${format} to clipboard`);
       } else {
         downloadFile(content, filename, mime);
-        statusDiv.style.background = '#15803d';
+        setStatusState(statusDiv, 'success');
         statusDiv.textContent = `Done. Downloaded ${filename}`;
         notify(`Downloaded ${filename}`);
       }
     } catch (error) {
-      statusDiv.style.background = '#b91c1c';
+      setStatusState(statusDiv, 'error');
       statusDiv.textContent = `Export failed: ${error.message}`;
       console.error('[Claude Exporter]', error);
       notify(`Export failed: ${error.message}`);
     } finally {
       STATE.isExporting = false;
+      setExportingUI(false);
       setTimeout(() => statusDiv.remove(), 3500);
     }
   }
