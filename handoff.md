@@ -1,38 +1,40 @@
 # Handoff — claude-ai-chat-exporter
 
-Machine-readable state: [`progress.json`](progress.json).
+Machine-readable state: [`progress.json`](progress.json). History: [`CHANGELOG.md`](CHANGELOG.md) and [Releases](https://github.com/tyhallcsu/claude-ai-chat-exporter/releases).
 
-## Current state
-- Shared-chat export (`claude.ai/share/<id>`) is merged: issue #2, PR #3, version `2026.09.29.1`.
-- Share routes load `/api/organizations/{org}/chat_snapshots/{id}?rendering_mode=messages&render_all_tools=true`.
-  Normal chats still load `chat_conversations/{id}`.
-- Share routes never fall back to the copy-button path (share pages have none). 401/403/404 and non-JSON responses show clear errors.
+## Current state (2026-09-29)
+- **Latest version:** `2026.09.29.3`, tagged and released as `v2026.09.29.3`. Greasy Fork serves the same version and syncs from raw `main`.
+- **Shared-chat export** (#2, #3):
+  - `/share/<id>` loads `/api/organizations/{org}/chat_snapshots/{id}`. `/chat/<id>` still loads `chat_conversations/{id}`.
+  - 401/403/404 and non-JSON responses show clear errors. Share routes never use the copy-button fallback.
+- **Bug fixes** (#9–#16, PR #28, v2026.09.29.2): HTML escaping, code blocks with blank lines, clipboard failure reporting, DOM-fallback alignment, attachment names, non-chat routes, text-only messages, and backtick-safe fences.
+- **UI** (#8, PR #29, v2026.09.29.3):
+  - Options panel credits "by sharmanhall" (Greasy Fork profile) and links to Greasy Fork, GitHub and issues.
+  - Segmented format picker, toggles, and Escape or an outside click to close.
+- **Releases** (#17): `CHANGELOG.md`; tags and releases v2026.04.22.1, v2026.09.29.1, .2 and .3, each with its `.user.js`.
 
-## Verified snapshot shape (live, 2026-09-29)
+## Snapshot API shape (live, 2026-09-29)
 - Top-level keys: `uuid`, `conversation_uuid`, `snapshot_name`, `chat_messages`, `created_by`, `creator`, `project_uuid`, `is_public`, `working_documents`.
 - There's no `name` and no `current_leaf_message_uuid`. Every message has `parent_message_uuid`.
-- `document.title` is just "Claude".
 
-## Tests
-- Node harness (run locally, not committed) uses the real snapshot structure with the message text replaced.
-  - Share export: 5 messages in order, title taken from `snapshot_name`.
-  - 403: clear no-access error.
-  - `/chat/<id>`: still calls `chat_conversations`.
-- Live snapshot API: HTTP 200, 5 parent-linked messages.
-- Tampermonkey end-to-end: see `progress.json` (`tampermonkey_end_to_end`).
+## Validation
+- `npm test`: 24/24 pass (node:test, no dependencies).
+- Live in-page run, real claude.ai session, v2026.09.29.3. The script was loaded into the page with a GM API shim, not through Tampermonkey.
+  - **Shared chat:** Markdown has the correct title and 5 alternating messages with no empty bodies. HTML has 5 sections and no `<script>`. JSON has 5 messages.
+  - **Owned chat after SPA navigation:** calls `chat_conversations`; 8 alternating messages; a single Export button.
+- Not yet run: installing through Tampermonkey itself and exporting there, and the no-access error on a live share (it's covered by unit tests).
 
 ## Privacy remediation (public repo)
-- #4 (done): the tip commit was rewritten with the maintainer's noreply identity, and #27 was replayed on top. The code is unchanged; `main` became `229ed0f`.
-- #5: this file previously had local environment details. Now replaced with neutral wording.
-- #6: PR #3's historical commits are still served by GitHub (commit pages, `.patch`). Only GitHub Support can remove them; the request is drafted privately.
-- Issue/PR creator and merge-actor metadata on #2 and #3 can't be edited. Deleting and re-creating them would lose history for little benefit.
+- **#4 (done):** `main` was rewritten so every commit uses the maintainer's public noreply identity. The code didn't change.
+- **#5 (done):** this file contains no environment or account details.
+- **#6 (open):** PR #3's historical commits and the pre-rewrite squash commit are still served by GitHub. Only GitHub Support can purge them; the maintainer has a private request draft.
+- **Accepted:** the creator and merge-actor metadata on #2 and #3 can't be edited. Deleting and re-creating them would lose history for little benefit.
 
 Workers were run using isolated local Claude Code configurations. Account/config details are intentionally excluded from the public repository.
 
-## Open work
-- #9–#16: bug fixes and `npm test` suite, shipping as 2026.09.29.2.
-- #7: publish the current build to Greasy Fork (script 574914).
-- #8: author credit and options-panel UI polish.
+## Open
+- #6: GitHub Support purge (maintainer action).
+- #22–#26: feature proposals (the roadmap in the README).
 
 ## Next action
-See `progress.json` → `next_actions[0]`.
+Send the GitHub Support request for #6.

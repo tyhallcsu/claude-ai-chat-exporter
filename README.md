@@ -166,7 +166,7 @@ The following are **proposals and known issues, not shipped capabilities**. Each
 - [Text-only messages exported as empty (#15)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/15)
 - [Triple backticks breaking code fences (#16)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/16)
 
-Also already tracked: [options-panel polish and author credit (#8)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/8) and [Greasy Fork publication parity (#7)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/7).
+Shipped in v2026.09.29.3: [options-panel author credit and UI refresh (#8)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/8), and [Greasy Fork parity (#7)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/7) is confirmed.
 
 ## Contributing
 
