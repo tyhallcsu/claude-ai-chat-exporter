@@ -1,0 +1,34 @@
+{
+  "project": "claude-ai-chat-exporter",
+  "updated_at": "2026-09-29T20:58:48Z",
+  "version": "2026.09.29.1",
+  "shared_chat_fix": {
+    "issue": 2,
+    "pull_request": 3,
+    "merged": true,
+    "merged_sha_original": "5472c1736450bc89ec8a028f6ecf0bc7054f4b92",
+    "merged_sha_rewrite_candidate": "295038731cd9912849b423c8086bcb1393219fea",
+    "node_harness": "passed",
+    "live_snapshot_api": "passed",
+    "tampermonkey_end_to_end": "pending",
+    "normal_chat_regression": "pending"
+  },
+  "privacy_cleanup": {
+    "status": "in_progress",
+    "issues": [4, 5, 6],
+    "current_main_clean": false,
+    "tip_rewrite": "prepared_awaiting_approval",
+    "handoff_clean": true,
+    "historical_pr_objects_clean": false,
+    "github_support_required": true
+  },
+  "greasyfork": { "issue": 7, "script_id": 574914, "published_version": "2026.04.22.1", "status": "pending" },
+  "ui_enhancement": { "issue": 8, "status": "pending" },
+  "blockers": [
+    "Force push of rewritten main tip needs maintainer approval (#4)",
+    "GitHub Support must purge PR #3 historical commits (#6)"
+  ],
+  "next_actions": [
+    "Approve force-with-lease of main to the rewrite candidate (#4)"
+  ]
+}
