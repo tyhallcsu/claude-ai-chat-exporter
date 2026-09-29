@@ -174,12 +174,18 @@
     } catch (e) {
       throw new Error(`Could not reach the Claude API for this shared chat (${e.message}).`);
     }
-    if (res.status === 403 || res.status === 404) {
+    if ([401, 403, 404].includes(res.status)) {
       throw new Error(`No access to this shared chat (HTTP ${res.status}). Open it while signed in to an account it was shared with.`);
     }
     if (!res.ok) throw new Error(`Shared chat request failed (HTTP ${res.status}).`);
 
-    const data = normalizeSnapshot(await res.json(), shareId);
+    let raw;
+    try {
+      raw = await res.json();
+    } catch {
+      throw new Error('Shared chat response was not JSON (possibly a login or bot check). Reload and try again.');
+    }
+    const data = normalizeSnapshot(raw, shareId);
     if (!data.chat_messages.length) throw new Error('Shared chat returned no messages.');
     return data;
   }
@@ -193,7 +199,8 @@
       uuid: raw?.uuid ?? snap.uuid ?? shareId,
       name: raw?.name ?? raw?.snapshot_name ?? raw?.conversation?.name ?? snap.name ?? null,
       model: raw?.model ?? snap.model ?? raw?.conversation?.model ?? null,
-      chat_messages: raw?.chat_messages ?? snap.chat_messages ?? raw?.messages ?? [],
+      chat_messages: [raw?.chat_messages, snap.chat_messages, raw?.conversation?.chat_messages,
+        snap.messages, raw?.messages].find(Array.isArray) ?? [],
       current_leaf_message_uuid: raw?.current_leaf_message_uuid
         ?? snap.current_leaf_message_uuid ?? null,
     };

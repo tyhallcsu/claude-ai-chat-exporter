@@ -26,7 +26,7 @@ Open either link in a browser with [Tampermonkey](https://www.tampermonkey.net/)
 ## Features
 
 - **API-first extraction** — reads the conversation directly from Claude's internal API instead of clicking each copy button. Much faster and more reliable.
-- **DOM fallback** — if the API call fails (auth change, new endpoint), falls back to the classic copy-button + clipboard interception flow.
+- **DOM fallback** — if the API call fails (auth change, new endpoint), falls back to the classic copy-button + clipboard interception flow (chat pages only; shared chats have no copy buttons).
 - **Branched threads** — walks from the current leaf through `parent_message_uuid` so you get only the active thread, not every branch from edited messages.
 - **Rich content types** — renders `text`, `thinking`, `tool_use`, `tool_result`, and attachments.
 - **Three formats** — Markdown (default), JSON (full structured dump), HTML (standalone styled page).

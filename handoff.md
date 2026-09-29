@@ -15,13 +15,16 @@ Workers run as Claude CLI subprocesses, not in-app Agent subagents:
 Failover order: ~/.claude-tyler2 → ~/.claude-worker → ~/.claude-tylerhalltech. Never dknopp@roofbrosrestoration.com.
 Worker output: `.opx/` (gitignored).
 
+## Verified snapshot shape (live, 2026-09-29)
+Top keys: uuid, conversation_uuid, snapshot_name, chat_messages, created_by, creator, project_uuid, is_public, working_documents.
+No `name`, no `current_leaf_message_uuid`; every message has `parent_message_uuid`. `document.title` is just "Claude".
+
 ## Status
 - [x] Issue opened (#2)
-- [x] Branch + handoff created
-- [ ] W1: implement fix in `claude-ai-chat-exporter.user.js`
-- [ ] Verify snapshot response shape in Tyler's Chrome (in-app browser account gets 403)
-- [ ] W2: adversarial review
-- [ ] PR, squash-merge, verify raw file on main
+- [x] W1 (CLI, tyler@essremodel.com) implemented share route + chat_snapshots fetch
+- [x] W2 (CLI) adversarial review: no P1; applied P2 + 401 / non-JSON / README fixes
+- [x] Node harness (sanitized real snapshot structure): share export = 5 msgs in order, title from snapshot_name; 403 = clear error; /chat unchanged
+- [ ] PR squash-merged, raw file on main shows 2026.09.29.1
 
 ## Next step
-Dispatch W1.
+Merge the PR, then reinstall the userscript from main in Tampermonkey and export the share link.
