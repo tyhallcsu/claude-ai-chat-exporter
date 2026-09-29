@@ -1,4 +1,16 @@
+<div align="center">
+
+<img src="assets/repository-banner.jpg" alt="Claude AI Chat Exporter — layered message cards flowing into Markdown, JSON, and HTML files" width="1200">
+
 # Claude AI Chat Exporter
+
+**Keep a readable copy of the conversation. Choose the format that fits your next step.**
+
+[![JavaScript](https://img.shields.io/badge/JavaScript-Userscript-f7df1e?style=flat-square&logo=javascript&logoColor=black)](claude-ai-chat-exporter.user.js) [![Formats](https://img.shields.io/badge/Export-MD_·_JSON_·_HTML-c56b45?style=flat-square)](#output-format) [![License: MIT](https://img.shields.io/badge/License-MIT-48443e?style=flat-square)](LICENSE)
+
+[Install](#install) · [Usage](#usage) · [Preview](#export-preview) · [Options](#options) · [Limitations](#limitations-and-privacy)
+
+</div>
 
 A Tampermonkey / Violentmonkey / Greasemonkey userscript that exports Claude AI conversations from [claude.ai](https://claude.ai) to **Markdown**, **JSON**, or **HTML**.
 
@@ -29,10 +41,16 @@ Open either link in a browser with [Tampermonkey](https://www.tampermonkey.net/)
 2. Click the **Export** button in the bottom-right corner, or press `Alt+Shift+E`.
 3. Click the **⚙** gear to open the options panel and change format / toggles.
 
+## Export preview
+
+![Actual HTML export from two synthetic messages about a balcony herb garden](assets/demo-export.png)
+
+**Demonstration:** this is the unchanged script's HTML output, rendered from two synthetic messages. It is not a screenshot of a real Claude conversation. [Open the generated HTML source](assets/demo-export.html).
+
 ## Output format
 
 ### Markdown
-```markdown
+````markdown
 # My Conversation Title
 
 - **Exported:** 2026-04-22T...
@@ -60,7 +78,7 @@ Here's my response.
 ```json
 { "query": "..." }
 ```
-```
+````
 
 ### JSON
 Full structured dump including message UUIDs, timestamps, and raw `content` parts — useful for downstream processing.
@@ -75,11 +93,24 @@ Standalone single-file HTML page with light/dark styling.
 | Format | Markdown | Output format |
 | Include thinking blocks | ✅ | Extended thinking content |
 | Include tool use / results | ✅ | `tool_use` and `tool_result` blocks |
-| Include attachments | ✅ | Uploaded files / images |
+| Include attachments | ✅ | Attachment names and available extracted text; no original-file download |
 | Include timestamps | ✅ | Show `created_at` in message headings |
 | Copy to clipboard | ❌ | Skip the download and copy the output instead |
 
 Options persist across sessions via `GM_setValue`.
+
+The thinking, tool, and attachment toggles affect Markdown and HTML rendering. **JSON retains the active thread's raw content and attachment fields even when those toggles are off.** Its structured timestamps are retained too.
+
+## Limitations and privacy
+
+- The API request uses your existing signed-in browser session on the current Claude origin. This script contains no external upload endpoint; output is downloaded locally or copied to the clipboard. Treat exported files as private conversation data.
+- Claude's internal API, organization cookie, and page selectors may change. An API-first implementation is not a guarantee of compatibility with every current account or interface.
+- The DOM fallback captures copyable messages present on the page. Unloaded messages and rich API metadata may be missing. If a copy action times out, review the exported text and sender order before relying on the result.
+- Attachments are represented by names and available extracted content. Image content becomes an `[image]` placeholder; original images and uploaded files are not bundled.
+- HTML is a standalone styled document with a minimal renderer, not a full Markdown engine or a reproduction of Claude's interface.
+- If export fails, confirm you are on a conversation page, signed in, and the userscript is enabled for the page. If clipboard output is unavailable, turn off **Copy to clipboard** and try downloading. The current clipboard path may report success even when a browser write fails; verify the actual paste.
+
+This is an independent userscript, not an official Anthropic export tool. No private account access is needed to inspect the source or view the synthetic preview.
 
 ## Changelog
 
