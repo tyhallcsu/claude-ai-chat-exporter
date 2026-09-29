@@ -12,7 +12,7 @@ Share pages have no `action-bar-copy` buttons, so the DOM fallback also fails.
 ## Worker setup
 Workers run as Claude CLI subprocesses, not in-app Agent subagents:
 `CLAUDE_CONFIG_DIR=~/.claude-essremodel claude -p ... --model opus`
-Failover order: ~/.claude-tyler2 → ~/.claude-worker → ~/.claude-tylerhalltech. Never dknopp@roofbrosrestoration.com.
+Failover: other local CLI config dirs (see ~/.claude plan file).
 Worker output: `.opx/` (gitignored).
 
 ## Verified snapshot shape (live, 2026-09-29)
@@ -21,7 +21,7 @@ No `name`, no `current_leaf_message_uuid`; every message has `parent_message_uui
 
 ## Status
 - [x] Issue opened (#2)
-- [x] W1 (CLI, tyler@essremodel.com) implemented share route + chat_snapshots fetch
+- [x] W1 (CLI, primary account) implemented share route + chat_snapshots fetch
 - [x] W2 (CLI) adversarial review: no P1; applied P2 + 401 / non-JSON / README fixes
 - [x] Node harness (sanitized real snapshot structure): share export = 5 msgs in order, title from snapshot_name; 403 = clear error; /chat unchanged
 - [ ] PR squash-merged, raw file on main shows 2026.09.29.1
