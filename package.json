@@ -1,0 +1,7 @@
+{
+  "name": "claude-ai-chat-exporter",
+  "private": true,
+  "scripts": {
+    "test": "node --test \"test/**/*.test.js\""
+  }
+}

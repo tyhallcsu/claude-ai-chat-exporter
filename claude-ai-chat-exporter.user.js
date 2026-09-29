@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Claude AI Chat Exporter
 // @namespace    https://github.com/tyhallcsu/claude-ai-chat-exporter
-// @version      2026.09.29.1
+// @version      2026.09.29.2
 // @description  Export Claude AI conversations to Markdown, JSON, or HTML. API-first with DOM fallback; supports thinking blocks, tool use, attachments, and branched threads.
 // @author       sharmanhall
 // @homepageURL  https://github.com/tyhallcsu/claude-ai-chat-exporter
@@ -21,7 +21,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '2026.09.29.1';
+  const VERSION = '2026.09.29.2';
 
   const DEFAULTS = {
     format: 'markdown',      // 'markdown' | 'json' | 'html'
@@ -118,8 +118,9 @@
     if (shareIdx >= 0 && parts[shareIdx + 1]) return { kind: 'share', id: parts[shareIdx + 1] };
     const idx = parts.indexOf('chat');
     if (idx >= 0 && parts[idx + 1]) return { kind: 'chat', id: parts[idx + 1] };
-    const last = parts[parts.length - 1];
-    return /^[0-9a-f-]{16,}$/i.test(last) ? { kind: 'chat', id: last } : null;
+    // Bare /<uuid> only; /project/<uuid> etc. are not chats.
+    return parts.length === 1 && /^[0-9a-f-]{16,}$/i.test(parts[0])
+      ? { kind: 'chat', id: parts[0] } : null;
   }
 
   function getOrgIdFromCookie() {
@@ -247,6 +248,13 @@
 
   // ---------- content rendering ----------
 
+  // Fence longer than any backtick run inside body, so content can't close it early.
+  function fence(body, lang = '') {
+    const runs = String(body).match(/`+/g) ?? [];
+    const marker = '`'.repeat(Math.max(3, ...runs.map((r) => r.length + 1)));
+    return `${marker}${lang}\n${body}\n${marker}`;
+  }
+
   function stringifyToolInput(input) {
     if (input == null) return '';
     try { return JSON.stringify(input, null, 2); } catch { return String(input); }
@@ -262,7 +270,8 @@
   }
 
   function renderMessageToMarkdown(msg) {
-    const parts = Array.isArray(msg.content) ? msg.content : [];
+    const parts = Array.isArray(msg.content) ? msg.content
+      : typeof msg.text === 'string' ? [{ type: 'text', text: msg.text }] : [];
     const out = [];
 
     for (const p of parts) {
@@ -276,10 +285,10 @@
       } else if (type === 'tool_use' && prefs.includeToolUse) {
         const name = p.name ?? 'tool';
         const input = stringifyToolInput(p.input);
-        out.push(`**→ tool_use: \`${name}\`**\n\n\`\`\`json\n${input}\n\`\`\``);
+        out.push(`**→ tool_use: \`${name}\`**\n\n${fence(input, 'json')}`);
       } else if (type === 'tool_result' && prefs.includeToolUse) {
         const body = toolResultText(p.content ?? p.text);
-        if (body) out.push(`**← tool_result${p.is_error ? ' (error)' : ''}**\n\n\`\`\`\n${body}\n\`\`\``);
+        if (body) out.push(`**← tool_result${p.is_error ? ' (error)' : ''}**\n\n${fence(body)}`);
       } else if (type === 'image') {
         out.push('*[image]*');
       }
@@ -291,9 +300,9 @@
         const name = att.file_name ?? att.name ?? 'attachment';
         const content = att.extracted_content ?? att.content ?? '';
         if (content) {
-          out.push(`**📎 attachment: ${escapeHtml(name)}**\n\n\`\`\`\n${content}\n\`\`\``);
+          out.push(`**📎 attachment: ${name}**\n\n${fence(content)}`);
         } else {
-          out.push(`**📎 attachment: ${escapeHtml(name)}**`);
+          out.push(`**📎 attachment: ${name}**`);
         }
       }
     }
@@ -343,18 +352,31 @@
     }, null, 2);
   }
 
+  // Minimal md→html: fenced code + paragraphs. Code blocks become placeholder
+  // tokens first so blank lines inside them survive the paragraph split; all
+  // remaining text goes through escapeHtml.
+  function markdownToHtml(md) {
+    const blocks = [];
+    const tokenized = String(md).replace(/\u0000/g, '')
+      .replace(/(^|\n)(`{3,})([^\n`]*)\n([\s\S]*?)\n\2(?=\n|$)/g, (_, lead, _f, lang, code) => {
+        blocks.push(`<pre class="code" data-lang="${escapeHtml(lang.trim())}"><code>${escapeHtml(code)}</code></pre>`);
+        return `${lead}\n\n\u0000CODE${blocks.length - 1}\u0000\n\n`;
+      });
+    return tokenized
+      .split(/\n{2,}/)
+      .filter((b) => b.trim())
+      .map((b) => {
+        const m = b.trim().match(/^\u0000CODE(\d+)\u0000$/);
+        return m ? blocks[Number(m[1])] : `<p>${escapeHtml(b).replace(/\n/g, '<br>')}</p>`;
+      })
+      .join('\n');
+  }
+
   function buildHtml(thread, meta) {
     const rows = thread.map((msg) => {
       const sender = msg.sender === 'human' ? 'Human' : 'Claude';
       const ts = prefs.includeTimestamps ? formatTimestamp(msg.created_at) : '';
-      const md = renderMessageToMarkdown(msg);
-      // minimal md→html: fenced code + paragraphs
-      const html = md
-        .replace(/```(\w*)\n([\s\S]*?)```/g,
-          (_, lang, code) => `<pre class="code" data-lang="${escapeHtml(lang)}"><code>${escapeHtml(code)}</code></pre>`)
-        .split(/\n{2,}/)
-        .map((b) => b.startsWith('<pre') ? b : `<p>${escapeHtml(b).replace(/\n/g, '<br>')}</p>`)
-        .join('\n');
+      const html = markdownToHtml(renderMessageToMarkdown(msg));
       return `<section class="msg ${sender.toLowerCase()}">
   <header><span class="who">${sender}</span>${ts ? `<span class="ts">${escapeHtml(ts)}</span>` : ''}</header>
   <div class="body">${html}</div>
@@ -404,29 +426,36 @@ ${rows}
       throw new Error('Clipboard API unavailable — cannot use DOM fallback.');
     }
 
-    const captures = [];
+    // Captures are keyed by item index; writes outside the active item's
+    // window are dropped, so a missed copy can't shift later messages.
+    const captures = new Array(items.length).fill('');
+    let active = -1;
     const origWrite = navigator.clipboard.writeText.bind(navigator.clipboard);
     navigator.clipboard.writeText = async (text) => {
-      if (typeof text === 'string' && text.trim()) captures.push(text);
+      if (active >= 0 && !captures[active] && typeof text === 'string' && text.trim()) {
+        captures[active] = text;
+      }
     };
 
     try {
       for (let i = 0; i < items.length; i++) {
-        const before = captures.length;
         statusDiv.textContent = `Fallback export ${i + 1}/${items.length}...`;
+        active = i;
         items[i].copyBtn.scrollIntoView({ behavior: 'instant', block: 'center' });
         items[i].copyBtn.click();
         const deadline = Date.now() + 1800;
-        while (captures.length === before && Date.now() < deadline) await delay(60);
+        while (!captures[i] && Date.now() < deadline) await delay(60);
+        active = -1;
       }
     } finally {
+      active = -1;
       navigator.clipboard.writeText = origWrite;
     }
 
     return items.map((it, i) => ({
       sender: it.type === 'assistant' ? 'assistant' : 'human',
       created_at: null,
-      content: [{ type: 'text', text: captures[i] ?? '' }],
+      content: [{ type: 'text', text: captures[i] }],
     })).filter((m) => m.content[0].text);
   }
 
@@ -575,6 +604,7 @@ ${rows}
     const format = formatOverride ?? prefs.format;
 
     try {
+      if (!getRouteFromUrl()) throw new Error('Open a chat or shared chat to export.');
       statusDiv.textContent = 'Fetching conversation...';
       const data = await fetchConversationData();
       let thread;
@@ -613,7 +643,8 @@ ${rows}
       }
 
       if (prefs.copyInsteadOfDownload) {
-        await Promise.resolve(copyToClipboard(content));
+        const copied = await Promise.resolve(copyToClipboard(content));
+        if (!copied) throw new Error('Clipboard write failed');
         statusDiv.style.background = '#15803d';
         statusDiv.textContent = `Copied ${format} to clipboard (${thread.length} messages)`;
         notify(`Copied ${format} to clipboard`);

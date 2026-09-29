@@ -137,9 +137,9 @@ This is an independent userscript, not an official Anthropic export tool. No pri
 | No Export button | Enable the script for `claude.ai` / `app.claude.ai`, reload the page, and check the userscript manager's site permissions |
 | Shared chat says no access | Sign in to an account allowed to view it, open the share URL, and reload. The snapshot path needs the organization cookie; it cannot bypass access restrictions |
 | “API unavailable and no copy buttons found” | Confirm the installed version and route. Shared-chat support was added in v2026.09.29.1; owned-chat fallback requires matching copy controls on the page |
-| “Copied” but nothing pastes | Turn off clipboard output and download instead; failure reporting is tracked in the roadmap below |
+| “Copied” but nothing pastes | Update to v2026.09.29.2 or later, which reports failed clipboard writes as errors. Otherwise, turn off clipboard output and download instead |
 | Missing messages or wrong speaker | Compare against the conversation, particularly after fallback timeouts; do not rely on a partial export as a complete record |
-| Code formatting looks wrong | Keep JSON as a structured reference while the Markdown/HTML fidelity issues below are addressed |
+| Code formatting looks wrong | Update to v2026.09.29.2 or later (safe HTML escaping, blank lines in code, collision-safe fences). If it persists, open an issue with a synthetic example |
 
 For a bug report, include the script version, browser, userscript manager, `/chat/` versus `/share/` route type, output format, and a **synthetic** example if possible. Remove private conversation text, account IDs, cookies, tokens, and signed attachment links from screenshots and logs before posting.
 
@@ -155,14 +155,16 @@ The following are **proposals and known issues, not shipped capabilities**. Each
 - [Add user-selected batch exports with progress and cancellation](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/25)
 - [Add an offline regression suite for export fidelity and browser failures](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/26)
 
-### Confirmed bugs
+### Fixed in v2026.09.29.2
 
-- [HTML raw-content injection (#9)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/9) — avoid opening HTML exports of untrusted conversation content until addressed.
-
-- [Report clipboard failures instead of unconditional success](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/11)
-- [Keep DOM fallback captures paired with their originating messages](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/12)
-- [Preserve blank lines inside HTML fenced code blocks](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/10)
-- [Use collision-safe Markdown fences for attachment and tool payloads](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/16)
+- [HTML export passes raw HTML through (#9)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/9)
+- [HTML code blocks with blank lines (#10)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/10)
+- [Clipboard failures reported as success (#11)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/11)
+- [DOM fallback text shifting to the wrong message (#12)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/12)
+- [Attachment names escaped in Markdown (#13)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/13)
+- [Non-chat pages treated as chats (#14)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/14)
+- [Text-only messages exported as empty (#15)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/15)
+- [Triple backticks breaking code fences (#16)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/16)
 
 Also already tracked: [options-panel polish and author credit (#8)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/8) and [Greasy Fork publication parity (#7)](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/7).
 
@@ -170,20 +172,11 @@ Also already tracked: [options-panel polish and author credit (#8)](https://gith
 
 Start with an existing issue or [open a focused issue](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/new). Use synthetic fixtures when working on extraction and formatting. Keep changes small and include reproduction steps and validation results in the PR. Do not attach real chat exports or authentication material.
 
-For a local syntax check, run `node --check claude-ai-chat-exporter.user.js` from a checkout with Node.js installed. This checks parsing only; it does not prove live Claude compatibility. An offline regression suite is tracked in the roadmap above.
+Run `npm test` (Node 20+, no dependencies) for the offline regression suite, and `node --check claude-ai-chat-exporter.user.js` for a syntax check. Neither proves live Claude compatibility; broader fidelity coverage is tracked in #26.
 
 ## Changelog
 
-### 2026.09.29.1
-- Support exporting shared chats (`claude.ai/share/<id>`) via the snapshot API, with a clear error when your account has no access (#2).
-
-### 2026.04.22.1
-- Rewrite: API-first extraction with DOM fallback.
-- Add JSON and HTML export formats.
-- Support `thinking`, `tool_use`, `tool_result`, attachments.
-- Follow branched threads via `current_leaf_message_uuid`.
-- Add settings panel and `Alt+Shift+E` shortcut.
-- Guarantee clipboard patch is restored on failure.
+See [CHANGELOG.md](CHANGELOG.md) and [Releases](https://github.com/tyhallcsu/claude-ai-chat-exporter/releases).
 
 ## License
 
