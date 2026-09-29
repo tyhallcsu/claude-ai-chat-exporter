@@ -26,7 +26,7 @@ Open either link in a browser with [Tampermonkey](https://www.tampermonkey.net/)
 ## Features
 
 - **API-first extraction** — reads the conversation directly from Claude's internal API instead of clicking each copy button. Much faster and more reliable.
-- **DOM fallback** — if the API call fails (auth change, new endpoint), falls back to the classic copy-button + clipboard interception flow.
+- **DOM fallback** — if the API call fails (auth change, new endpoint), falls back to the classic copy-button + clipboard interception flow (chat pages only; shared chats have no copy buttons).
 - **Branched threads** — walks from the current leaf through `parent_message_uuid` so you get only the active thread, not every branch from edited messages.
 - **Rich content types** — renders `text`, `thinking`, `tool_use`, `tool_result`, and attachments.
 - **Three formats** — Markdown (default), JSON (full structured dump), HTML (standalone styled page).
@@ -37,7 +37,7 @@ Open either link in a browser with [Tampermonkey](https://www.tampermonkey.net/)
 
 ## Usage
 
-1. Open any conversation at `https://claude.ai/chat/<id>`.
+1. Open any conversation at `https://claude.ai/chat/<id>`. Shared chats at `https://claude.ai/share/<id>` are also supported when your signed-in account has access to them.
 2. Click the **Export** button in the bottom-right corner, or press `Alt+Shift+E`.
 3. Click the **⚙** gear to open the options panel and change format / toggles.
 
@@ -113,6 +113,9 @@ The thinking, tool, and attachment toggles affect Markdown and HTML rendering. *
 This is an independent userscript, not an official Anthropic export tool. No private account access is needed to inspect the source or view the synthetic preview.
 
 ## Changelog
+
+### 2026.09.29.1
+- Support exporting shared chats (`claude.ai/share/<id>`) via the snapshot API, with a clear error when your account has no access (#2).
 
 ### 2026.04.22.1
 - Rewrite: API-first extraction with DOM fallback.
