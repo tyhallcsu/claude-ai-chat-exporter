@@ -22,7 +22,7 @@ Machine-readable state: [`progress.json`](progress.json).
 - Tampermonkey end-to-end: see `progress.json` (`tampermonkey_end_to_end`).
 
 ## Privacy remediation (public repo)
-- #4: tip commit on `main` had the wrong author identity. A replacement commit with the same code is ready; the force push waits for maintainer approval.
+- #4 (done): the tip commit was rewritten with the maintainer's noreply identity, and #27 was replayed on top. The code is unchanged; `main` became `229ed0f`.
 - #5: this file previously had local environment details. Now replaced with neutral wording.
 - #6: PR #3's historical commits are still served by GitHub (commit pages, `.patch`). Only GitHub Support can remove them; the request is drafted privately.
 - Issue/PR creator and merge-actor metadata on #2 and #3 can't be edited. Deleting and re-creating them would lose history for little benefit.
@@ -30,6 +30,7 @@ Machine-readable state: [`progress.json`](progress.json).
 Workers were run using isolated local Claude Code configurations. Account/config details are intentionally excluded from the public repository.
 
 ## Open work
+- #9–#16: bug fixes and `npm test` suite, shipping as 2026.09.29.2.
 - #7: publish the current build to Greasy Fork (script 574914).
 - #8: author credit and options-panel UI polish.
 

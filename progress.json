@@ -1,34 +1,64 @@
 {
   "project": "claude-ai-chat-exporter",
-  "updated_at": "2026-09-29T20:58:48Z",
-  "version": "2026.09.29.1",
+  "updated_at": "2026-09-29T21:08:14Z",
+  "version": "2026.09.29.2",
   "shared_chat_fix": {
     "issue": 2,
     "pull_request": 3,
     "merged": true,
-    "merged_sha_original": "5472c1736450bc89ec8a028f6ecf0bc7054f4b92",
-    "merged_sha_rewrite_candidate": "295038731cd9912849b423c8086bcb1393219fea",
     "node_harness": "passed",
     "live_snapshot_api": "passed",
     "tampermonkey_end_to_end": "pending",
-    "normal_chat_regression": "pending"
+    "normal_chat_regression": "pending",
+    "merged_sha": "295038731cd9912849b423c8086bcb1393219fea"
   },
   "privacy_cleanup": {
     "status": "in_progress",
-    "issues": [4, 5, 6],
-    "current_main_clean": false,
-    "tip_rewrite": "prepared_awaiting_approval",
+    "issues": [
+      4,
+      5,
+      6
+    ],
+    "current_main_clean": true,
+    "tip_rewrite": "done",
     "handoff_clean": true,
     "historical_pr_objects_clean": false,
-    "github_support_required": true
+    "github_support_required": true,
+    "main_after_rewrite": "229ed0ffa3a31aa2cb0412117f72f5705cb4322a"
   },
-  "greasyfork": { "issue": 7, "script_id": 574914, "published_version": "2026.04.22.1", "status": "pending" },
-  "ui_enhancement": { "issue": 8, "status": "pending" },
+  "greasyfork": {
+    "issue": 7,
+    "script_id": 574914,
+    "published_version": "2026.04.22.1",
+    "status": "pending"
+  },
+  "ui_enhancement": {
+    "issue": 8,
+    "status": "pending"
+  },
   "blockers": [
-    "Force push of rewritten main tip needs maintainer approval (#4)",
     "GitHub Support must purge PR #3 historical commits (#6)"
   ],
   "next_actions": [
-    "Approve force-with-lease of main to the rewrite candidate (#4)"
-  ]
+    "Merge bug-fix PR, then ship UI (#8) as 2026.09.29.3 and create releases (#17)"
+  ],
+  "bugfixes": {
+    "issues": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "version": "2026.09.29.2",
+    "npm_test": "20/20 passed",
+    "status": "in_pr"
+  },
+  "releases": {
+    "issue": 17,
+    "status": "pending"
+  }
 }

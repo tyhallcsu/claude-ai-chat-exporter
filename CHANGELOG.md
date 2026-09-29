@@ -17,7 +17,6 @@ script's `YYYY.MM.DD.N` scheme and are tagged as `vYYYY.MM.DD.N`.
 - Code fences grow to fit content that itself contains triple backticks (#16).
 
 ### Added
-- Options panel shows author credit (by sharmanhall) with links to Greasy Fork and GitHub, and has refreshed styling (#8).
 - `CHANGELOG.md`, version tags and GitHub Releases (#17).
 - Node regression tests (`npm test`).
 
