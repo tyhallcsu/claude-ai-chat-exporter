@@ -4,6 +4,19 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the
 script's `YYYY.MM.DD.N` scheme and are tagged as `vYYYY.MM.DD.N`.
 
+## [2026.09.29.3] - 2026-09-29
+
+### Added
+- Options panel credits the author (by sharmanhall, linking to the Greasy Fork profile) and links to Greasy Fork, GitHub and the issue tracker (#8).
+- Greasy Fork listing text kept in the repo as `greasyfork.md` (#7).
+
+### Changed
+- Refreshed Export button, options panel and status toast.
+  - Segmented format picker, toggle switches, and a close button.
+  - Escape or an outside click closes the panel.
+  - Busy state while exporting, and a light theme.
+  - Focus outlines and ARIA roles; reduced-motion support.
+
 ## [2026.09.29.2] - 2026-09-29
 
 ### Fixed
@@ -39,6 +52,7 @@ script's `YYYY.MM.DD.N` scheme and are tagged as `vYYYY.MM.DD.N`.
 ### Fixed
 - Clipboard patch is always restored on failure.
 
+[2026.09.29.3]: https://github.com/tyhallcsu/claude-ai-chat-exporter/compare/v2026.09.29.2...v2026.09.29.3
 [2026.09.29.2]: https://github.com/tyhallcsu/claude-ai-chat-exporter/compare/v2026.09.29.1...v2026.09.29.2
 [2026.09.29.1]: https://github.com/tyhallcsu/claude-ai-chat-exporter/compare/v2026.04.22.1...v2026.09.29.1
 [2026.04.22.1]: https://github.com/tyhallcsu/claude-ai-chat-exporter/releases/tag/v2026.04.22.1

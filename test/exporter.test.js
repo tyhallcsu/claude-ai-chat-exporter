@@ -12,6 +12,7 @@ const EXPORTS = [
   'getRouteFromUrl', 'fetchShareData', 'normalizeSnapshot', 'buildActiveThread',
   'renderMessageToMarkdown', 'markdownToHtml', 'buildHtml', 'fence',
   'extractViaDomFallback', 'copyToClipboard', 'startExport', 'prefs',
+  'createButton', 'togglePanel',
 ];
 
 // Load the userscript in a fresh vm context with browser/GM stubs. The init
@@ -22,15 +23,22 @@ function load(opts = {}) {
   const patched = src.replace(HOOK, `globalThis.__exporter = { ${EXPORTS.join(', ')} };`);
 
   const created = [];
-  const makeEl = () => {
+  const makeEl = (tag) => {
     const el = {
-      style: {}, textContent: '', children: [],
-      appendChild(c) { this.children.push(c); }, append() {}, remove() {},
-      click() {}, addEventListener() {}, querySelector: () => null, querySelectorAll: () => [],
+      tagName: String(tag).toUpperCase(), style: {}, textContent: '', children: [], parent: null, attrs: {},
+      appendChild(c) { c.parent = this; this.children.push(c); return c; },
+      append(...cs) { cs.forEach((c) => this.appendChild(c)); },
+      remove() { if (this.parent) this.parent.children = this.parent.children.filter((c) => c !== this); this.parent = null; },
+      contains(n) { return n === this || this.children.some((c) => c.contains(n)); },
+      setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return this.attrs[k] ?? null; },
+      click() {}, focus() {}, addEventListener() {}, querySelector: () => null, querySelectorAll: () => [],
     };
     created.push(el);
     return el;
   };
+  const walk = (n) => [n, ...n.children.flatMap(walk)];
+  const body = makeEl('body');
+  created.length = 0;
 
   const fetchCalls = [];
   const ctx = {
@@ -47,9 +55,10 @@ function load(opts = {}) {
     document: {
       cookie: opts.cookie ?? 'lastActiveOrg=org-1',
       title: opts.title ?? 'Claude',
-      body: { appendChild() {} },
+      body,
       createElement: makeEl,
-      getElementById: () => null,
+      getElementById: (id) => walk(body).find((n) => n.id === id) ?? null,
+      addEventListener() {}, removeEventListener() {},
       querySelector: () => null,
       querySelectorAll: opts.querySelectorAll ?? (() => []),
     },
@@ -67,7 +76,7 @@ function load(opts = {}) {
   };
   vm.createContext(ctx);
   vm.runInContext(patched, ctx, { filename: 'claude-ai-chat-exporter.user.js' });
-  return { api: ctx.__exporter, ctx, created, fetchCalls };
+  return { api: ctx.__exporter, ctx, created, fetchCalls, body, walk };
 }
 
 const jsonRes = (status, body) => ({
@@ -323,4 +332,60 @@ test('#12 missed and late copies do not shift messages', async () => {
   // Late write after the loop must not land anywhere or throw.
   await new Promise((r) => setTimeout(r, 200));
   assert.equal(msgs.length, 2);
+});
+
+// ---------- UI (#8) ----------
+
+const PANEL_ID = 'tyhallcsu-claude-exporter-panel';
+const BUTTON_ID = 'tyhallcsu-claude-exporter-button';
+const links = (env, root) => env.walk(root).filter((n) => n.tagName === 'A');
+
+test('#8 panel credits sharmanhall with a safe Greasy Fork link', () => {
+  const env = load();
+  env.api.togglePanel();
+  const panel = env.ctx.document.getElementById(PANEL_ID);
+  assert.ok(panel, 'panel not appended');
+  assert.equal(panel.getAttribute('role'), 'dialog');
+
+  const author = links(env, panel).find((a) => a.textContent === 'sharmanhall');
+  assert.ok(author, 'sharmanhall credit link missing');
+  assert.equal(author.href, 'https://greasyfork.org/en/users/866731-sharmanhall');
+  assert.equal(author.target, '_blank');
+  assert.match(author.rel, /\bnoopener\b/);
+  assert.match(author.rel, /\bnoreferrer\b/);
+
+  const text = env.walk(panel).map((n) => n.textContent).join(' ');
+  assert.match(text, /Claude Chat Exporter/);
+  assert.match(text, /by /);
+});
+
+test('#8 panel footer links to Greasy Fork, GitHub and issues', () => {
+  const env = load();
+  env.api.togglePanel();
+  const byText = Object.fromEntries(
+    links(env, env.ctx.document.getElementById(PANEL_ID)).map((a) => [a.textContent, a]));
+  assert.equal(byText['Greasy Fork'].href, 'https://greasyfork.org/en/scripts/574914-claude-ai-chat-exporter');
+  assert.equal(byText.GitHub.href, 'https://github.com/tyhallcsu/claude-ai-chat-exporter');
+  assert.equal(byText['Report issue'].href, 'https://github.com/tyhallcsu/claude-ai-chat-exporter/issues');
+  for (const a of Object.values(byText)) assert.match(a.rel, /noopener/);
+});
+
+test('#8 toggling the panel twice removes it', () => {
+  const env = load();
+  env.api.togglePanel();
+  assert.ok(env.ctx.document.getElementById(PANEL_ID));
+  env.api.togglePanel();
+  assert.equal(env.ctx.document.getElementById(PANEL_ID), null);
+  env.api.togglePanel();
+  assert.ok(env.ctx.document.getElementById(PANEL_ID), 'panel reopens after close');
+});
+
+test('#8 createButton twice creates one button; style injected once', () => {
+  const env = load();
+  env.api.createButton();
+  env.api.createButton();
+  env.api.togglePanel();
+  const nodes = env.walk(env.body);
+  assert.equal(nodes.filter((n) => n.id === BUTTON_ID).length, 1);
+  assert.equal(nodes.filter((n) => n.id === 'tyhallcsu-claude-exporter-style').length, 1);
 });
