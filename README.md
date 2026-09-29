@@ -18,11 +18,11 @@ Author: [sharmanhall](https://greasyfork.org/en/users/866731-sharmanhall). Mirro
 
 ## Choose your format
 
-| Format | Best for | What to expect |
-|---|---|---|
-| **Markdown** | Notes, knowledge bases, and AI handoffs | Readable text with message headings and optional thinking/tool/attachment sections |
-| **JSON** | Analysis and custom processing | Structured active-thread messages with raw content and attachment metadata; inclusion toggles do not filter it |
-| **HTML** | A standalone document you can open in a browser | Styled conversation cards with light/dark support and a minimal text/code renderer |
+| Format | Use it for |
+|---|---|
+| **Markdown** | Notes and handoffs: readable headings with optional thinking, tools, and attachment text |
+| **JSON** | Analysis: structured messages and raw metadata; inclusion toggles do not filter it |
+| **HTML** | Browser reading: styled cards with light/dark support and a minimal renderer |
 
 **HTML safety:** raw-content injection is tracked in [#9](https://github.com/tyhallcsu/claude-ai-chat-exporter/issues/9). Prefer JSON or Markdown viewed as plain text for untrusted conversations until this is fixed.
 
