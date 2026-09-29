@@ -174,16 +174,7 @@ For a local syntax check, run `node --check claude-ai-chat-exporter.user.js` fro
 
 ## Changelog
 
-### 2026.09.29.1
-- Support exporting shared chats (`claude.ai/share/<id>`) via the snapshot API, with a clear error when your account has no access (#2).
-
-### 2026.04.22.1
-- Rewrite: API-first extraction with DOM fallback.
-- Add JSON and HTML export formats.
-- Support `thinking`, `tool_use`, `tool_result`, attachments.
-- Follow branched threads via `current_leaf_message_uuid`.
-- Add settings panel and `Alt+Shift+E` shortcut.
-- Guarantee clipboard patch is restored on failure.
+See [CHANGELOG.md](CHANGELOG.md) and [Releases](https://github.com/tyhallcsu/claude-ai-chat-exporter/releases).
 
 ## License
 
