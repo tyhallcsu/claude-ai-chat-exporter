@@ -3,6 +3,7 @@
 Machine-readable state: [`progress.json`](progress.json). History: [`CHANGELOG.md`](CHANGELOG.md) and [Releases](https://github.com/tyhallcsu/claude-ai-chat-exporter/releases).
 
 ## Current state (2026-09-29)
+- **Screenshots** (#33): `assets/screenshots/`. The URL and chat title are pixelated, and the image metadata is clean.
 - **Latest version:** `2026.09.29.3`, tagged and released as `v2026.09.29.3`. Greasy Fork serves the same version and syncs from raw `main`.
 - **Shared-chat export** (#2, #3):
   - `/share/<id>` loads `/api/organizations/{org}/chat_snapshots/{id}`. `/chat/<id>` still loads `chat_conversations/{id}`.
@@ -33,8 +34,13 @@ Machine-readable state: [`progress.json`](progress.json). History: [`CHANGELOG.m
 Workers were run using isolated local Claude Code configurations. Account/config details are intentionally excluded from the public repository.
 
 ## Open
+- #31: usage-limit tracker. **Decided, not started.**
+  - **Placement:** both inline under the composer and inside the Export panel. Each placement can be turned off.
+  - **Default:** on, inline under the composer.
+  - **Approach:** clean-room code against `GET /api/organizations/{org}/usage`. The reference script is GPL-3.0 and this repo is MIT, so none of its code can be copied. Credit the original in the README.
 - #6: GitHub Support purge (maintainer action).
 - #22–#26: feature proposals (the roadmap in the README).
 
 ## Next action
-Send the GitHub Support request for #6.
+1. The maintainer sends the GitHub Support request for #6.
+2. When development resumes: implement #31 per the decisions above, with synthetic `/usage` fixtures in `npm test`. Ship it as the next version with a changelog entry and a release.

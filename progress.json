@@ -1,6 +1,6 @@
 {
   "project": "claude-ai-chat-exporter",
-  "updated_at": "2026-09-29T21:15:37Z",
+  "updated_at": "2026-09-29T21:26:44Z",
   "version": "2026.09.29.3",
   "shared_chat_fix": {
     "issue": 2,
@@ -72,6 +72,22 @@
   ],
   "next_actions": [
     "Send the private GitHub Support request for #6",
-    "Optional: install v2026.09.29.3 via Tampermonkey and export the shared chat once"
-  ]
+    "When development resumes: implement #31 per the recorded decisions"
+  ],
+  "usage_tracker": {
+    "issue": 31,
+    "status": "planned_not_started",
+    "placement": [
+      "inline_under_composer",
+      "export_panel"
+    ],
+    "each_placement_optional": true,
+    "default": "on_inline_under_composer",
+    "approach": "clean_room_mit",
+    "reference_license": "GPL-3.0"
+  },
+  "screenshots": {
+    "pull_request": 33,
+    "privacy_checked": true
+  }
 }
