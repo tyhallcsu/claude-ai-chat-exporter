@@ -1,6 +1,6 @@
 {
   "project": "claude-ai-chat-exporter",
-  "updated_at": "2026-09-29T21:26:44Z",
+  "updated_at": "2026-09-29T21:29:01Z",
   "version": "2026.09.29.3",
   "shared_chat_fix": {
     "issue": 2,
@@ -89,5 +89,29 @@
   "screenshots": {
     "pull_request": 33,
     "privacy_checked": true
-  }
+  },
+  "milestone": "checkpoint_2026-09-29: all shipped work merged; development paused",
+  "completed": [
+    "#2 shared chats",
+    "#4 identity rewrite",
+    "#5 handoff",
+    "#7 greasyfork",
+    "#8 UI",
+    "#9-#16 bugfixes",
+    "#17 releases"
+  ],
+  "pending": [
+    "#6 GitHub Support purge (maintainer)",
+    "#31 usage tracker (decided, not started)",
+    "#22-#26 proposals",
+    "Tampermonkey-installed E2E (optional)"
+  ],
+  "resume_point": {
+    "branch": "main",
+    "last_origin_main_before_checkpoint": "f56398c80c91f51adab3bc8f9f4d46e101f7424e",
+    "checkpoint_pr": 35,
+    "next": "implement #31 on feat/usage-tracker"
+  },
+  "background_jobs": "none running",
+  "notes": "docs/notes/ (review findings, node harness, fixture)"
 }
