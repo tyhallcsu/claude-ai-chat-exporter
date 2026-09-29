@@ -9,3 +9,7 @@ The isolated fixture also verified active-branch selection, Markdown output, JSO
 ## Banner prompt
 
 Create original 3:1 editorial GitHub banner. Large exact text 'CLAUDE AI' then 'CHAT EXPORTER', smaller 'MARKDOWN · JSON · HTML'. Charcoal ink, warm ivory and burnt orange palette. Left dominant elegant condensed sans typography with mobile-readable title. Right tactile layered message cards transforming into three crisp file sheets, subtle orange directional lines, warm paper grain and sculptural soft shadows. Premium restrained developer publication artwork. No Anthropic logo, no fake UI, no real conversations, no account information, no additional text. Opaque background.
+
+## User-supplied interface screenshots
+
+The two PNGs in `screenshots/` were supplied by the maintainer on 2026-09-29 and show v2026.09.29.3. They are committed byte-for-byte, preserving the original annotations and redactions. The close-up shows export options; the browser overview locates the controls in Claude. Neither is generated artwork or evidence of a completed export.

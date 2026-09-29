@@ -8,7 +8,7 @@
 
 [![JavaScript](https://img.shields.io/badge/JavaScript-Userscript-f7df1e?style=flat-square&logo=javascript&logoColor=black)](claude-ai-chat-exporter.user.js) [![Formats](https://img.shields.io/badge/Export-MD_·_JSON_·_HTML-c56b45?style=flat-square)](#output-format) [![License: MIT](https://img.shields.io/badge/License-MIT-48443e?style=flat-square)](LICENSE)
 
-[Install](#install) · [Choose a format](#choose-your-format) · [Preview](#export-preview) · [Troubleshooting](#troubleshooting) · [Roadmap](#roadmap)
+[Install](#install) · [Choose a format](#choose-your-format) · [Screenshots](#screenshots) · [Export preview](#export-preview) · [Troubleshooting](#troubleshooting) · [Roadmap](#roadmap)
 
 </div>
 
@@ -58,6 +58,24 @@ Open either link in a browser with [Tampermonkey](https://www.tampermonkey.net/)
 **Quick start:** install → reload Claude → open an owned or accessible shared conversation → choose options with **⚙** → click **Export**. Downloads are the default; clipboard output is optional.
 
 Files use the conversation title and export date, such as `Weekend_plan_2026-09-29.md`. Review the saved file before sharing it, especially when the exporter reports a fallback.
+
+## Screenshots
+
+### Export options at a glance
+
+Choose Markdown, JSON, or HTML, select which content to include, and switch between a download and clipboard output.
+
+<p align="center">
+  <img src="assets/screenshots/export-options-v2026.09.29.3.png" alt="Claude Chat Exporter v2026.09.29.3 options panel with format tabs, inclusion toggles, clipboard setting, author credit, and project links" width="420">
+</p>
+
+*Maintainer-supplied screenshot of v2026.09.29.3. Markdown is selected, all inclusion switches are on, and clipboard output is off. JSON retains raw fields as explained in [Options](#options).*
+
+### Where to find it in Claude
+
+![Annotated browser screenshot highlighting the exporter options panel, Export button, and settings gear in the bottom-right corner of Claude](assets/screenshots/exporter-in-claude-v2026.09.29.3.png)
+
+*The red arrow and outline identify the exporter controls. The supplied image already obscures account and conversation identifiers; those redactions are preserved. These screenshots show the interface, not proof of a completed export.*
 
 ## Export preview
 
