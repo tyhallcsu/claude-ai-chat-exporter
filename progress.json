@@ -52,7 +52,7 @@
   "greasyfork": {
     "issue": 7,
     "script_id": 574914,
-    "published_version": "2026.09.29.3",
+    "published_version": "2026.09.30.1",
     "description_updated": true,
     "sync": "auto from raw main",
     "status": "done"

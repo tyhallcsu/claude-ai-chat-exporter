@@ -19,7 +19,7 @@ Everything is merged to `main`; there's no half-finished code. The latest releas
 | HTML escaping (script injection), code blocks with blank lines, clipboard failure reporting, DOM-fallback alignment, attachment names, non-chat routes, text-only messages, backtick-safe fences; `npm test` | #9–#16 | #28 | 2026.09.29.2 |
 | Options panel: "by sharmanhall" credit, links, UI refresh | #8 | #29 | 2026.09.29.3 |
 | `CHANGELOG.md`, tags and releases v2026.04.22.1, v2026.09.29.1, .2, .3 (each with its `.user.js`) | #17 | #28 | — |
-| Greasy Fork serves 2026.09.29.3 with the new description (code auto-syncs from raw `main`) | #7 | — | — |
+| Greasy Fork serves 2026.09.30.1 with the current description (code auto-syncs from raw `main`) | #7 | — | — |
 | Tip commit on `main` re-authored with the maintainer's public identity (force-with-lease, approved) | #4 | — | — |
 | Handoff/progress docs, #31 decisions | — | #30, #34 | — |
 | Screenshots (parallel session; privacy-checked: pixelated URL and title, clean metadata) | — | #33 | — |
