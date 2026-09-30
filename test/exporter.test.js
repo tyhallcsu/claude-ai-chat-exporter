@@ -13,6 +13,7 @@ const EXPORTS = [
   'renderMessageToMarkdown', 'markdownToHtml', 'buildHtml', 'fence',
   'extractViaDomFallback', 'copyToClipboard', 'startExport', 'prefs',
   'createButton', 'togglePanel',
+  'normalizeUsage', 'usageLevel', 'formatReset', 'fetchUsage', 'refreshUsage', 'renderUsage', 'USAGE',
 ];
 
 // Load the userscript in a fresh vm context with browser/GM stubs. The init
@@ -30,6 +31,11 @@ function load(opts = {}) {
       append(...cs) { cs.forEach((c) => this.appendChild(c)); },
       remove() { if (this.parent) this.parent.children = this.parent.children.filter((c) => c !== this); this.parent = null; },
       contains(n) { return n === this || this.children.some((c) => c.contains(n)); },
+      replaceChildren(...cs) { this.children.forEach((c) => { c.parent = null; }); this.children = []; this.append(...cs); },
+      after(n) { n.remove(); n.parent = this.parent; this.parent.children.splice(this.parent.children.indexOf(this) + 1, 0, n); },
+      get nextElementSibling() { return this.parent?.children[this.parent.children.indexOf(this) + 1] ?? null; },
+      get parentElement() { return this.parent; },
+      closest(sel) { for (let n = this; n; n = n.parent) if (n.tagName === sel.toUpperCase()) return n; return null; },
       setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return this.attrs[k] ?? null; },
       click() {}, focus() {}, addEventListener() {}, querySelector: () => null, querySelectorAll: () => [],
     };
@@ -42,7 +48,7 @@ function load(opts = {}) {
 
   const fetchCalls = [];
   const ctx = {
-    console: { log() {}, warn() {}, error() {} },
+    console: { log() {}, warn() {}, error() {}, debug() {} },
     setTimeout: (fn, ms) => { const t = setTimeout(fn, ms); t.unref?.(); return t; },
     clearTimeout,
     Promise, Date, JSON, Map, Set, Array, Object, String, Number, Math, RegExp, Error,
@@ -59,7 +65,7 @@ function load(opts = {}) {
       createElement: makeEl,
       getElementById: (id) => walk(body).find((n) => n.id === id) ?? null,
       addEventListener() {}, removeEventListener() {},
-      querySelector: () => null,
+      querySelector: opts.querySelector ?? (() => null),
       querySelectorAll: opts.querySelectorAll ?? (() => []),
     },
     navigator: { clipboard: opts.clipboard },
@@ -388,4 +394,226 @@ test('#8 createButton twice creates one button; style injected once', () => {
   const nodes = env.walk(env.body);
   assert.equal(nodes.filter((n) => n.id === BUTTON_ID).length, 1);
   assert.equal(nodes.filter((n) => n.id === 'tyhallcsu-claude-exporter-style').length, 1);
+});
+
+// ---------- usage tracker (#31) ----------
+
+const USAGE_FIXTURE = require('./fixtures/usage.json');
+const USAGE_ID = 'tyhallcsu-claude-exporter-usage';
+const usageFetch = async () => jsonRes(200, USAGE_FIXTURE.current);
+const usageCalls = (env) => env.fetchCalls.filter((u) => u.endsWith('/usage'));
+const rowSummary = (rows) => [...rows].map((r) => [r.key, r.label, r.percent, r.resetsAt?.toISOString() ?? null]);
+
+// Env with a composer (form > fieldset > chat-input) under body.
+function loadWithComposer(opts = {}) {
+  let input = null;
+  const env = load({
+    pathname: '/chat/abc-def-0123456789',
+    fetch: usageFetch,
+    querySelector: (sel) => (sel.includes('chat-input') ? input : null),
+    ...opts,
+  });
+  const form = env.ctx.document.createElement('form');
+  const fieldset = env.ctx.document.createElement('fieldset');
+  input = env.ctx.document.createElement('div');
+  env.body.appendChild(form);
+  form.appendChild(fieldset);
+  fieldset.appendChild(input);
+  return { ...env, form, fieldset, removeComposer() { form.remove(); input = null; } };
+}
+
+test('#31 normalizeUsage maps limits: labels, clamp/round, null resets', () => {
+  const { api } = load();
+  assert.deepEqual(rowSummary(api.normalizeUsage(USAGE_FIXTURE.current)), [
+    ['session', 'Session', 42, '2030-01-08T18:00:00.000Z'],
+    ['weekly_all', 'Weekly', 72, '2030-01-12T16:00:00.000Z'],
+    ['weekly_scoped:model-example-1', 'Weekly · Example Model', 100, null],
+    ['weekly_scoped', 'Weekly (scoped)', 0, null],
+    ['monthly_extra_pool', 'Monthly extra pool', 12, null],
+  ]);
+  const [first] = api.normalizeUsage(USAGE_FIXTURE.current);
+  assert.ok(first.resetsAt instanceof Date);
+  assert.equal(first.severity, 'normal');
+});
+
+test('#31 normalizeUsage falls back to legacy buckets', () => {
+  const { api } = load();
+  assert.deepEqual(rowSummary(api.normalizeUsage(USAGE_FIXTURE.legacy)), [
+    ['five_hour', 'Session', 13, '2030-01-08T18:00:00.000Z'],
+    ['seven_day', 'Weekly', 68, '2030-01-12T16:00:00.000Z'],
+    ['seven_day_sonnet', 'Weekly · Sonnet', 100, null],
+  ]);
+});
+
+test('#31 normalizeUsage returns [] for malformed input', () => {
+  const { api } = load();
+  const hostile = { get limits() { throw new Error('boom'); } };
+  for (const bad of [null, undefined, 42, 'nope', [], {}, { limits: 'x' }, { limits: [null, 7, {}] },
+    { limits: [{ kind: 'session', percent: NaN }] }, { five_hour: 5, seven_day: [] }, hostile]) {
+    assert.equal(api.normalizeUsage(bad).length, 0);
+  }
+});
+
+test('#31 formatReset is relative under 24h, weekday + time beyond', () => {
+  const { api } = load();
+  const now = Date.parse('2030-01-08T12:00:00Z');
+  const at = (ms) => new Date(now + ms);
+  const MIN = 60000;
+  assert.equal(api.formatReset(at(192 * MIN), now), 'resets in 3h 12m');
+  assert.equal(api.formatReset(at(12 * MIN), now), 'resets in 12m');
+  assert.equal(api.formatReset(at(180 * MIN), now), 'resets in 3h');
+  assert.equal(api.formatReset(at(20000), now), 'resets in <1m');
+  assert.equal(api.formatReset(at(-MIN), now), 'resets now');
+  assert.equal(api.formatReset(null, now), '');
+  assert.equal(api.formatReset(new Date('nope'), now), '');
+
+  const far = at(3 * 24 * 60 * MIN + 17 * MIN);
+  const text = api.formatReset(far, now);
+  assert.equal(text, `resets ${far.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`);
+  assert.ok(text.includes(far.toLocaleDateString(undefined, { weekday: 'short' })), text);
+  assert.doesNotMatch(text, /resets in /);
+});
+
+test('#31 usageLevel thresholds', () => {
+  const { api } = load();
+  assert.deepEqual([0, 69, 70, 89, 90, 100].map((p) => api.usageLevel(p, 'normal')),
+    ['normal', 'normal', 'warn', 'warn', 'danger', 'danger']);
+  assert.equal(api.usageLevel(10, 'warning'), 'warn');
+  assert.equal(api.usageLevel(95, 'warning'), 'danger');
+});
+
+test('#31 fetchUsage hits the usage endpoint and returns rows', async () => {
+  const { api, fetchCalls } = load({ fetch: usageFetch });
+  const rows = await api.fetchUsage();
+  assert.deepEqual(fetchCalls, ['/api/organizations/org-1/usage']);
+  assert.equal(rows.length, 5);
+});
+
+test('#31 fetchUsage failures return null without throwing', async () => {
+  const cases = {
+    'no org': { cookie: '' },
+    'non-OK': { fetch: async () => jsonRes(403, {}) },
+    'non-JSON': { fetch: async () => ({ status: 200, ok: true, json: async () => { throw new SyntaxError('html'); } }) },
+    network: { fetch: async () => { throw new TypeError('offline'); } },
+    'no usable rows': { fetch: async () => jsonRes(200, { limits: [] }) },
+  };
+  for (const [name, opts] of Object.entries(cases)) {
+    const { api, fetchCalls } = load(opts);
+    assert.equal(await api.fetchUsage(), null, name);
+    if (name === 'no org') assert.equal(fetchCalls.length, 0);
+  }
+});
+
+test('#31 panel shows Usage toggles, on by default', () => {
+  const env = load();
+  assert.equal(env.api.prefs.showUsageInline, true);
+  assert.equal(env.api.prefs.showUsageInPanel, true);
+  env.api.togglePanel();
+  const nodes = env.walk(env.ctx.document.getElementById(PANEL_ID));
+  assert.ok(nodes.some((n) => n.className === 'tce-label' && n.textContent === 'Usage'), 'Usage heading missing');
+  for (const key of ['showUsageInline', 'showUsageInPanel']) {
+    const toggle = nodes.find((n) => n.getAttribute('data-k') === key);
+    assert.ok(toggle, `${key} toggle missing`);
+    assert.equal(toggle.getAttribute('role'), 'switch');
+    assert.equal(toggle.checked, true);
+  }
+});
+
+test('#31 panel usage section shows rows + "updated"; hidden when pref off or fetch fails', async () => {
+  const env = load({ fetch: usageFetch });
+  await env.api.refreshUsage(true);
+  env.api.togglePanel();
+  const box = () => env.walk(env.ctx.document.getElementById(PANEL_ID)).find((n) => n.className === 'tce-usage');
+  assert.equal(box().hidden, false);
+  assert.equal(box().children.filter((n) => n.className === 'tce-u-row').length, 5);
+  assert.match(env.walk(box()).map((n) => n.textContent).join(' '), /updated \d+s ago/);
+  const scoped = box().children[2];
+  assert.equal(scoped.getAttribute('data-level'), 'danger');
+  assert.deepEqual(scoped.children.map((n) => n.textContent), ['Weekly · Example Model', '', '100%']);
+
+  env.api.prefs.showUsageInPanel = false;
+  env.api.renderUsage();
+  assert.equal(box().hidden, true);
+  assert.equal(box().children.length, 0);
+
+  env.api.prefs.showUsageInPanel = true;
+  env.ctx.fetch = async () => jsonRes(500, {});
+  assert.equal(await env.api.refreshUsage(true), null);
+  assert.equal(box().hidden, true);
+});
+
+test('#31 inline strip is not created when pref off', async () => {
+  const env = loadWithComposer();
+  env.api.prefs.showUsageInline = false;
+  await env.api.refreshUsage(true);
+  env.api.renderUsage();
+  assert.equal(env.api.USAGE.rows.length, 5);
+  assert.equal(env.ctx.document.getElementById(USAGE_ID), null);
+});
+
+test('#31 no usage fetch when both prefs are off', async () => {
+  const env = loadWithComposer();
+  env.api.prefs.showUsageInline = false;
+  env.api.prefs.showUsageInPanel = false;
+  assert.equal(await env.api.refreshUsage(true), null);
+  assert.equal(env.fetchCalls.length, 0);
+});
+
+test('#31 only one strip after two render calls, placed after the composer fieldset', async () => {
+  const env = loadWithComposer();
+  await env.api.refreshUsage(true);
+  env.api.renderUsage();
+  env.api.renderUsage();
+  const strips = env.walk(env.body).filter((n) => n.id === USAGE_ID);
+  assert.equal(strips.length, 1);
+  assert.equal(env.fieldset.nextElementSibling, strips[0]);
+  assert.deepEqual(env.form.children.map((n) => n.tagName), ['FIELDSET', 'DIV']);
+  assert.equal(strips[0].children.filter((n) => n.className === 'tce-u-row').length, 5);
+  assert.equal(strips[0].children.at(-1).getAttribute('aria-label'), 'Refresh usage limits');
+  assert.ok(strips[0].getAttribute('aria-label'));
+  assert.ok(strips[0].title);
+  assert.equal(env.walk(env.body).filter((n) => n.id === 'tyhallcsu-claude-exporter-style').length, 1);
+});
+
+test('#31 strip is removed on pref off, on fetch failure, and without a composer', async () => {
+  const env = loadWithComposer();
+  const strip = () => env.ctx.document.getElementById(USAGE_ID);
+  await env.api.refreshUsage(true);
+  assert.ok(strip());
+
+  env.api.prefs.showUsageInline = false;
+  env.api.renderUsage();
+  assert.equal(strip(), null);
+
+  env.api.prefs.showUsageInline = true;
+  env.api.renderUsage();
+  assert.ok(strip());
+  env.ctx.fetch = async () => { throw new TypeError('offline'); };
+  await env.api.refreshUsage(true);
+  assert.equal(strip(), null);
+
+  env.ctx.fetch = usageFetch;
+  await env.api.refreshUsage(true);
+  assert.ok(strip());
+  env.removeComposer();
+  env.api.renderUsage();
+  assert.equal(env.walk(env.body).filter((n) => n.id === USAGE_ID).length, 0);
+});
+
+test('#31 export refreshes usage without affecting the result; auto refresh is rate-limited', async () => {
+  const env = load({
+    pathname: '/chat/abc-def-0123456789',
+    fetch: async (url) => (url.endsWith('/usage') ? jsonRes(500, {}) : jsonRes(200, {
+      name: 'T', chat_messages: [{ uuid: 'a', sender: 'human', content: [{ type: 'text', text: 'hi' }] }],
+    })),
+  });
+  env.api.prefs.copyInsteadOfDownload = true;
+  await env.api.startExport('markdown');
+  assert.match(statusText(env.created), /^Copied markdown to clipboard/);
+  assert.equal(usageCalls(env).length, 1);
+  await env.api.refreshUsage();
+  await env.api.refreshUsage();
+  assert.equal(usageCalls(env).length, 1);
+  await env.api.refreshUsage(true);
+  assert.equal(usageCalls(env).length, 2);
 });
