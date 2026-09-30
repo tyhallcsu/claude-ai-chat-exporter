@@ -11,6 +11,7 @@ by [sharmanhall](https://greasyfork.org/en/users/866731-sharmanhall) · Source a
 - **Three formats:** Markdown (`.md`), JSON (`.json`) and standalone HTML (`.html`, with all message text safely escaped).
 - **Rich content:** thinking blocks, tool calls and results, attachments, and timestamps. Each one can be switched on or off.
 - **Branched threads.** Follows the branch you're currently viewing.
+- **Usage tracker.** Shows your session and weekly usage limits under the chat box and in the options panel (on by default; each can be turned off). Inspired by [Claude Inline Usage Tracker](https://greasyfork.org/en/scripts/567949-claude-inline-usage-tracker); independent implementation.
 - **Copy instead of download.** Optionally puts the export on your clipboard.
 - **Fallback.** On your own chats, falls back to Claude's copy buttons if the API is unavailable.
 
@@ -30,6 +31,7 @@ Everything runs in your browser. The script only calls claude.ai's own API with 
 
 Full history: [CHANGELOG.md](https://github.com/tyhallcsu/claude-ai-chat-exporter/blob/main/CHANGELOG.md) · [Releases](https://github.com/tyhallcsu/claude-ai-chat-exporter/releases)
 
+- **2026.09.30.1**: usage tracker (session and weekly limits) under the composer and in the options panel.
 - **2026.09.29.3**: refreshed options panel with author credit and links.
 - **2026.09.29.2**: safer HTML export, plus fixes for code blocks, clipboard reporting, the DOM fallback, attachment names and non-chat pages.
 - **2026.09.29.1**: export shared chats (`claude.ai/share/<id>`).
