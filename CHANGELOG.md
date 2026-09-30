@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the
 script's `YYYY.MM.DD.N` scheme and are tagged as `vYYYY.MM.DD.N`.
 
+## [2026.09.30.1] - 2026-09-30
+
+### Added
+- Usage tracker (#31).
+  - Shows session and weekly usage limits (including model-specific weekly limits), with the percent used and time until reset.
+  - Appears inline under the chat composer and in the options panel. It's on by default, and each placement can be turned off.
+  - Refreshes on load, when the tab becomes visible, every 5 minutes and after each export; a manual refresh button is included.
+  - A failed usage lookup hides the tracker and never affects exports.
+- Regression tests for the usage tracker (38 tests total).
+
 ## [2026.09.29.3] - 2026-09-29
 
 ### Added
@@ -52,6 +62,7 @@ script's `YYYY.MM.DD.N` scheme and are tagged as `vYYYY.MM.DD.N`.
 ### Fixed
 - Clipboard patch is always restored on failure.
 
+[2026.09.30.1]: https://github.com/tyhallcsu/claude-ai-chat-exporter/compare/v2026.09.29.3...v2026.09.30.1
 [2026.09.29.3]: https://github.com/tyhallcsu/claude-ai-chat-exporter/compare/v2026.09.29.2...v2026.09.29.3
 [2026.09.29.2]: https://github.com/tyhallcsu/claude-ai-chat-exporter/compare/v2026.09.29.1...v2026.09.29.2
 [2026.09.29.1]: https://github.com/tyhallcsu/claude-ai-chat-exporter/compare/v2026.04.22.1...v2026.09.29.1

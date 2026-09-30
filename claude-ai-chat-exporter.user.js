@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Claude AI Chat Exporter
 // @namespace    https://github.com/tyhallcsu/claude-ai-chat-exporter
-// @version      2026.09.29.3
+// @version      2026.09.30.1
 // @description  Export Claude AI conversations to Markdown, JSON, or HTML. API-first with DOM fallback; supports thinking blocks, tool use, attachments, and branched threads.
 // @author       sharmanhall
 // @homepageURL  https://github.com/tyhallcsu/claude-ai-chat-exporter
@@ -21,7 +21,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '2026.09.29.3';
+  const VERSION = '2026.09.30.1';
 
   const DEFAULTS = {
     format: 'markdown',      // 'markdown' | 'json' | 'html'

@@ -1,7 +1,7 @@
 {
   "project": "claude-ai-chat-exporter",
-  "updated_at": "2026-09-29T21:29:01Z",
-  "version": "2026.09.29.3",
+  "updated_at": "2026-09-30T15:34:38Z",
+  "version": "2026.09.30.1",
   "shared_chat_fix": {
     "issue": 2,
     "pull_request": 3,
@@ -35,7 +35,7 @@
   },
   "tests": {
     "command": "npm test",
-    "result": "24/24 passed"
+    "result": "38/38 passed"
   },
   "releases": {
     "issue": 17,
@@ -43,9 +43,10 @@
       "v2026.04.22.1",
       "v2026.09.29.1",
       "v2026.09.29.2",
-      "v2026.09.29.3"
+      "v2026.09.29.3",
+      "v2026.09.30.1"
     ],
-    "latest": "v2026.09.29.3",
+    "latest": "v2026.09.30.1",
     "status": "done"
   },
   "greasyfork": {
@@ -72,11 +73,11 @@
   ],
   "next_actions": [
     "Send the private GitHub Support request for #6",
-    "When development resumes: implement #31 per the recorded decisions"
+    "Pick the next roadmap issue (#22-#26)"
   ],
   "usage_tracker": {
     "issue": 31,
-    "status": "planned_not_started",
+    "status": "merged",
     "placement": [
       "inline_under_composer",
       "export_panel"
@@ -84,13 +85,16 @@
     "each_placement_optional": true,
     "default": "on_inline_under_composer",
     "approach": "clean_room_mit",
-    "reference_license": "GPL-3.0"
+    "reference_license": "GPL-3.0",
+    "pull_request": 36,
+    "version": "2026.09.30.1",
+    "live_validation": "passed_in_page"
   },
   "screenshots": {
     "pull_request": 33,
     "privacy_checked": true
   },
-  "milestone": "checkpoint_2026-09-29: all shipped work merged; development paused",
+  "milestone": "v2026.09.30.1 usage tracker shipped",
   "completed": [
     "#2 shared chats",
     "#4 identity rewrite",
@@ -98,19 +102,17 @@
     "#7 greasyfork",
     "#8 UI",
     "#9-#16 bugfixes",
-    "#17 releases"
+    "#17 releases",
+    "#31 usage tracker"
   ],
   "pending": [
     "#6 GitHub Support purge (maintainer)",
-    "#31 usage tracker (decided, not started)",
     "#22-#26 proposals",
     "Tampermonkey-installed E2E (optional)"
   ],
   "resume_point": {
     "branch": "main",
-    "last_origin_main_before_checkpoint": "f56398c80c91f51adab3bc8f9f4d46e101f7424e",
-    "checkpoint_pr": 35,
-    "next": "implement #31 on feat/usage-tracker"
+    "next": "next roadmap item (#22-#26); #6 Support purge is maintainer action"
   },
   "background_jobs": "none running",
   "notes": "docs/notes/ (review findings, node harness, fixture)"

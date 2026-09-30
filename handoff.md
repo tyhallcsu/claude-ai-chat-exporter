@@ -1,12 +1,10 @@
-# Handoff — claude-ai-chat-exporter (checkpoint 2026-09-29)
+# Handoff — claude-ai-chat-exporter (updated 2026-09-30)
 
 Machine-readable state: [`progress.json`](progress.json). History: [`CHANGELOG.md`](CHANGELOG.md), [Releases](https://github.com/tyhallcsu/claude-ai-chat-exporter/releases).
 Worker findings, the Node harness and its fixture: [`docs/notes/`](docs/notes/).
 
 ## Resume point
-> **In progress (2026-09-30):** #31 is being implemented on branch `feat/usage-tracker` by a CLI worker, with changes still uncommitted in the working tree. Verified live `/usage` shape: `limits[]` = `{kind: session|weekly_all|weekly_scoped, percent 0-100, resets_at, scope.model.display_name, is_active, severity}`; legacy buckets `five_hour`/`seven_day`/`seven_day_*` = `{utilization 0-100, resets_at}`. If this session dies before a PR exists, rerun the implementation from the brief in #31's decisions, then run `npm test`.
-
-**Development is paused on purpose; there's no half-finished code.** Everything is merged to `main`. The next work item is #31 (usage tracker), which hasn't been started.
+Everything is merged to `main`; there's no half-finished code. The latest release is **v2026.09.30.1**, which adds the usage tracker (#31).
 
 - Repo path: `~/Documents/GitHub/claude-ai-chat-exporter` (a normal clone, not a worktree). Remote `tyhallcsu/claude-ai-chat-exporter` (public).
 - Branch: `main`. This checkpoint was made on `chore/checkpoint-2026-09-29` and squash-merged (PR #35).
@@ -25,28 +23,32 @@ Worker findings, the Node harness and its fixture: [`docs/notes/`](docs/notes/).
 | Tip commit on `main` re-authored with the maintainer's public identity (force-with-lease, approved) | #4 | — | — |
 | Handoff/progress docs, #31 decisions | — | #30, #34 | — |
 | Screenshots (parallel session; privacy-checked: pixelated URL and title, clean metadata) | — | #33 | — |
+| Usage tracker (inline under the composer and in the panel, on by default; clean-room) | #31 | #36 | 2026.09.30.1 |
 | Docs/roadmap README (parallel Codex session) | #18–#21 closed as duplicates | #27 | — |
 
 ## Tests and reviews
-- `npm test`: 24/24 pass (node:test, no dependencies).
+- `npm test`: 38/38 pass (node:test, no dependencies).
 - `node docs/notes/node-harness.js`, run from the repo root: shared export (5 msgs), 403 error, and the `/chat` route all pass.
 - Live in-page run on claude.ai, v2026.09.29.3, loaded with a GM API shim:
   - **Shared chat:** Markdown, HTML and JSON all have 5 messages in order; the HTML has no `<script>`.
   - **Owned chat after SPA navigation:** calls `chat_conversations`; 8 messages.
   - **UI:** credit and links render; Escape closes the panel.
+- Usage tracker, checked live in-page on claude.ai:
+  - **`/new`:** the strip sits directly under the composer, showing Session, Weekly and Weekly·model rows with percentages and reset times.
+  - **Toggles:** turning a placement off removes it and turning it on restores it.
+  - **Owned chat after SPA navigation:** the strip re-attaches, and export still gives 8 messages.
+  - **`/share/`:** no strip (the page has no composer).
+- Verified `/usage` shape:
+  - `limits[]` entries: `{kind: session|weekly_all|weekly_scoped, percent 0-100, resets_at, scope.model.display_name, severity, is_active}`.
+  - Legacy fallback: `five_hour` / `seven_day` / `seven_day_*` = `{utilization 0-100, resets_at}`.
 - Reviews: W2 (PR #3) and W3 (all of `main`); findings in `docs/notes/review-findings.md`. Every W3 finding was fixed in #28.
 
 ## Partially completed / pending
 - **#6: GitHub Support purge.** The old commits from PR #3 (`d4968aa`, `fe9b201`, `67f8265`, `dfdc73a`) and the pre-rewrite squash `5472c17` still return HTTP 200. The request draft is private, in the maintainer's local gitignored `.opx/github-support-request.md`; nothing sensitive is in the repo.
 - **Tampermonkey-installed end-to-end test:** not run, because the Chrome extension wasn't connected. The in-page run above covers the same code.
 - **The live no-access error on a share link:** covered by unit tests only.
-- **Duplicate comment on #31:** a copy was posted from a non-maintainer account. The maintainer decides whether to delete it; the maintainer's own copy stays.
 
 ## To do
-- **#31 usage tracker. Decided, not started.**
-  - **Placement:** inline under the composer and in the Export panel, each optional.
-  - **Default:** on, inline.
-  - **Approach:** clean-room code against `GET /api/organizations/{org}/usage`. The reference script is GPL-3.0 and this repo is MIT, so none of its code can be copied.
 - #22–#26: feature proposals (the roadmap in the README). #26 is partly covered by `npm test`.
 
 ## Conventions (public repo)
@@ -62,4 +64,4 @@ git fetch --prune && git checkout main && git pull --ff-only
 git log --oneline -5 && npm test
 GH_TOKEN="$(gh auth token --user tyhallcsu)" gh issue view 31 --repo tyhallcsu/claude-ai-chat-exporter
 ```
-Then: `git checkout -b feat/usage-tracker` and implement #31 as described above.
+Then pick the next roadmap item (#22–#26). Open or confirm its issue first, then branch, PR, squash-merge and release.

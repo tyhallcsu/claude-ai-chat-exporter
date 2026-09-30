@@ -45,6 +45,7 @@ Open either link in a browser with [Tampermonkey](https://www.tampermonkey.net/)
 - **Rich content types** — renders `text`, `thinking`, `tool_use`, `tool_result`, and attachments.
 - **Three formats** — Markdown (default), JSON (full structured dump), HTML (standalone styled page).
 - **Settings panel** — toggle thinking blocks, tool calls, attachments, timestamps, and clipboard-vs-download.
+- **Usage tracker** — shows your Claude session and weekly usage limits (percent used and time until reset) under the chat composer and in the options panel. It's on by default and each placement can be turned off. It reads the same usage data as Claude's own settings page, and a failed usage lookup never affects exports. The idea was inspired by [Claude Inline Usage Tracker](https://greasyfork.org/en/scripts/567949-claude-inline-usage-tracker) by LMFuture; this is an independent implementation.
 - **Keyboard shortcut** — `Alt+Shift+E` triggers an export with the current format.
 - **Menu commands** — per-format export entries in the userscript manager menu.
 - **Safe clipboard patching** — the DOM fallback always restores `navigator.clipboard.writeText` in `finally`, after the capture attempt, including when that attempt throws. This does not guarantee a complete fallback export.
