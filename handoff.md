@@ -4,6 +4,8 @@ Machine-readable state: [`progress.json`](progress.json). History: [`CHANGELOG.m
 Worker findings, the Node harness and its fixture: [`docs/notes/`](docs/notes/).
 
 ## Resume point
+> **In progress (2026-09-30):** #31 is being implemented on branch `feat/usage-tracker` by a CLI worker, with changes still uncommitted in the working tree. Verified live `/usage` shape: `limits[]` = `{kind: session|weekly_all|weekly_scoped, percent 0-100, resets_at, scope.model.display_name, is_active, severity}`; legacy buckets `five_hour`/`seven_day`/`seven_day_*` = `{utilization 0-100, resets_at}`. If this session dies before a PR exists, rerun the implementation from the brief in #31's decisions, then run `npm test`.
+
 **Development is paused on purpose; there's no half-finished code.** Everything is merged to `main`. The next work item is #31 (usage tracker), which hasn't been started.
 
 - Repo path: `~/Documents/GitHub/claude-ai-chat-exporter` (a normal clone, not a worktree). Remote `tyhallcsu/claude-ai-chat-exporter` (public).
