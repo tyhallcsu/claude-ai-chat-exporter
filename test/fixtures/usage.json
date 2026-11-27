@@ -1,0 +1,25 @@
+{
+  "current": {
+    "limits": [
+      { "kind": "session", "group": "session", "percent": 41.6, "severity": "normal", "resets_at": "2030-01-08T18:00:00Z", "scope": null, "is_active": true },
+      { "kind": "weekly_all", "group": "weekly", "percent": 72, "severity": "normal", "resets_at": "2030-01-12T16:00:00Z", "scope": null, "is_active": true },
+      { "kind": "weekly_scoped", "group": "weekly", "percent": 130.2, "severity": "normal", "resets_at": null, "scope": { "model": { "display_name": "Example Model", "id": "model-example-1" }, "surface": null }, "is_active": false },
+      { "kind": "weekly_scoped", "group": "weekly", "percent": -5, "severity": "normal", "resets_at": "not-a-date", "scope": null, "is_active": false },
+      { "kind": "monthly_extra_pool", "group": "monthly", "percent": 12.4, "severity": "normal", "resets_at": null, "scope": null, "is_active": true },
+      { "kind": "session", "group": "session", "percent": null, "severity": "normal", "resets_at": null, "scope": null, "is_active": false },
+      { "kind": "weekly_all", "group": "weekly", "percent": "55", "severity": "normal", "resets_at": null, "scope": null, "is_active": false }
+    ],
+    "five_hour": { "utilization": 99, "resets_at": "2030-01-08T18:00:00Z" },
+    "seven_day": { "utilization": 99, "resets_at": "2030-01-12T16:00:00Z" },
+    "seven_day_opus": null
+  },
+  "legacy": {
+    "limits": [],
+    "five_hour": { "utilization": 12.5, "resets_at": "2030-01-08T18:00:00Z" },
+    "seven_day": { "utilization": 68.49, "resets_at": "2030-01-12T16:00:00Z" },
+    "seven_day_opus": null,
+    "seven_day_sonnet": { "utilization": 101, "resets_at": null },
+    "seven_day_oauth_apps": { "utilization": "n/a", "resets_at": null },
+    "extra_usage": { "is_enabled": false, "utilization": null }
+  }
+}

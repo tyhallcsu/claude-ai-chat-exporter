@@ -1,0 +1,119 @@
+{
+  "project": "claude-ai-chat-exporter",
+  "updated_at": "2026-09-30T15:34:38Z",
+  "version": "2026.09.30.1",
+  "shared_chat_fix": {
+    "issue": 2,
+    "pull_request": 3,
+    "merged": true,
+    "merged_sha": "295038731cd9912849b423c8086bcb1393219fea",
+    "node_harness": "passed",
+    "live_snapshot_api": "passed",
+    "tampermonkey_end_to_end": "passed_in_page_gm_shim; tampermonkey_install_manual_pending",
+    "normal_chat_regression": "passed"
+  },
+  "bugfixes": {
+    "issues": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "pull_request": 28,
+    "version": "2026.09.29.2",
+    "status": "merged"
+  },
+  "ui_enhancement": {
+    "issue": 8,
+    "pull_request": 29,
+    "version": "2026.09.29.3",
+    "status": "merged"
+  },
+  "tests": {
+    "command": "npm test",
+    "result": "38/38 passed"
+  },
+  "releases": {
+    "issue": 17,
+    "tags": [
+      "v2026.04.22.1",
+      "v2026.09.29.1",
+      "v2026.09.29.2",
+      "v2026.09.29.3",
+      "v2026.09.30.1"
+    ],
+    "latest": "v2026.09.30.1",
+    "status": "done"
+  },
+  "greasyfork": {
+    "issue": 7,
+    "script_id": 574914,
+    "published_version": "2026.09.30.1",
+    "description_updated": true,
+    "sync": "auto from raw main",
+    "status": "done"
+  },
+  "privacy_cleanup": {
+    "status": "blocked_on_github_support",
+    "issues": {
+      "4": "done",
+      "5": "done",
+      "6": "open"
+    },
+    "current_main_clean": true,
+    "historical_pr_objects_clean": false,
+    "github_support_required": true
+  },
+  "blockers": [
+    "GitHub Support must purge PR #3 historical commits (#6)"
+  ],
+  "next_actions": [
+    "Send the private GitHub Support request for #6",
+    "Pick the next roadmap issue (#22-#26)"
+  ],
+  "usage_tracker": {
+    "issue": 31,
+    "status": "merged",
+    "placement": [
+      "inline_under_composer",
+      "export_panel"
+    ],
+    "each_placement_optional": true,
+    "default": "on_inline_under_composer",
+    "approach": "clean_room_mit",
+    "reference_license": "GPL-3.0",
+    "pull_request": 36,
+    "version": "2026.09.30.1",
+    "live_validation": "passed_in_page"
+  },
+  "screenshots": {
+    "pull_request": 33,
+    "privacy_checked": true
+  },
+  "milestone": "v2026.09.30.1 usage tracker shipped",
+  "completed": [
+    "#2 shared chats",
+    "#4 identity rewrite",
+    "#5 handoff",
+    "#7 greasyfork",
+    "#8 UI",
+    "#9-#16 bugfixes",
+    "#17 releases",
+    "#31 usage tracker"
+  ],
+  "pending": [
+    "#6 GitHub Support purge (maintainer)",
+    "#22-#26 proposals",
+    "Tampermonkey-installed E2E (optional)"
+  ],
+  "resume_point": {
+    "branch": "main",
+    "next": "next roadmap item (#22-#26); #6 Support purge is maintainer action"
+  },
+  "background_jobs": "none running",
+  "notes": "docs/notes/ (review findings, node harness, fixture)"
+}
